@@ -10,10 +10,10 @@
 %  T available time units, a time unit consists of 30 minutes. H is fixed to 22 since the university is open from 8:00 to 19:00.
 %  st = 1 u.t., the sanification time that is fixed to a time unit, this time is spent every time that a coorte leaves a classroom.
 %  lst = 4 u.t, the lesson's slot time that is fixed to four time unit,
-%  o(c_i) = x u.t, for i in [1, N] and x integer, is the time unit amount required by coorte c_i each weak
+%  o(c_i) = x u.t, for i in [1, N] and x integer, is the time unit amount required by coorte c_i each week.
 
 int : K;
-set of int : ROOM = 1 .. 4*K;
+set of int : ROOM = 1 .. 2*K;
 array[ROOM] of int : capacity;
 
 int : N;
@@ -25,7 +25,7 @@ int : D;
 set of int : DEPARTMENT = 1 .. D;
 array[COORTE] of DEPARTMENT : department;
 
-int : AVAILABLE_TIME = 22; 
+int : AVAILABLE_TIME = 22*5; 
 int : ST = 1; % Sanification time.
 int : LST = 4; % Lecture slot time.
 
@@ -35,30 +35,44 @@ array[COORTE] of int : requiredTime;
 % a table where the rows are the classroom, the columns are the time units and the entry are the coorte which occupies the classroom at the specified time unit.
 array[ROOM, 1 .. AVAILABLE_TIME] of var COORTE : scheduling;
 
+% array[ROOM, 1 .. AVAILABLE_TIME, COORTE] of var bool : assignment;
+
+% constraint
+% forall(room in ROOM, time in 1 .. AVAILABLE_TIME, coorte in COORTE)(
+%   assignment[room,time,coorte] <-> scheduling[room, time] = coorte
+% );
+
 include "globals.mzn";
 
 predicate sameGroup(ROOM : room1, ROOM : room2) = 
-  room1 mod 4 == room2 mod 4;
+  room1 mod 2 == room2 mod 2;
 
 predicate sameDep(var COORTE : coorte1, var COORTE : coorte2) =
   department[coorte1] == department[coorte2];
   
 % Le coorti dello stesso dipartimento sono allocate nella stessa zona (contigua).
-constraint forall(time in 1 .. AVAILABLE_TIME)(
-  forall(dep in DEPARTMENT)(
-    exists(room in ROOM)(
-      let {var COORTE : coorte = scheduling[room, time]} in
-      department[coorte] = dep
-      -> 
-      not exists(room2 in ROOM)
-      (
-        let{var COORTE : coorte2 = scheduling[room2, time]} in
-        sameDep(coorte, coorte2) /\ 
-        not sameGroup(room, room2)
-      )
-    )
+constraint 
+forall(time in 1 .. AVAILABLE_TIME, dep in DEPARTMENT, room in ROOM)(
+  let 
+  {var COORTE : coorte = scheduling[room, time]}
+  in department[coorte] = dep
+  ->
+  not exists(room2 in ROOM)
+  (
+    let 
+    {var COORTE : coorte2 = scheduling[room2, time]}
+    in sameDep(coorte, coorte2) /\ 
+    not sameGroup(room, room2)
   )
 );
+
+% ogni coorte necessita di un certo numero di ore alla settimana requiredTime[corte].
+% constraint 
+% forall(coorte in COORTE)(
+%   sum(room in ROOM, time in 1 .. AVAILABLE_TIME)(
+%     bool2int(assignment[room, time, coorte])
+%   ) >= requiredTime[coorte]
+% );
 
 
 solve satisfy;
@@ -71,7 +85,6 @@ output ["K = \(K)\n"] ++
        ["department = \(department)\n"] ++
        ["requiredTime = \(requiredTime)\n"] ++
        ["scheduling = \(scheduling)\n"];
-
 
 
 
