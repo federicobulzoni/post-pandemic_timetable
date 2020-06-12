@@ -65,15 +65,14 @@ predicate endOfDay(1 .. AVAILABLE_TIME : time) =
 enum SHIFT = {coorte1, sanification, coorte2};
 int : S = card(SHIFT);
 
-int : Q = 3;
+int : Q = 2;
 int : q0 = 1;
 set of int : STATE = 1 .. Q;
 
 array[STATE, SHIFT] of int : t =
-  [| 1, 2, 3
-   | 1, 3, 1
-   | 3, 3, 3|];
-   
+  [| 1, 2, 0
+   | 1, 0, 1|];
+
 constraint 
 forall(time in 1 .. AVAILABLE_TIME, room in ROOM)(
   % Ogni volta che una coorte lascia un'aula c'è bisogno di una sanificazione
