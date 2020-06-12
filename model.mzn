@@ -34,13 +34,13 @@ array[COORTE] of int : requiredTime;
 % decision variables:
 % a table where the rows are the classroom, the columns are the time units and the entry are the coorte which occupies the classroom at the specified time unit.
 array[ROOM, 1 .. AVAILABLE_TIME] of var COORTE : scheduling;
+array[ROOM, 1 .. AVAILABLE_TIME, COORTE] of var bool : assignment;
 
-% array[ROOM, 1 .. AVAILABLE_TIME, COORTE] of var bool : assignment;
-
-% constraint
-% forall(room in ROOM, time in 1 .. AVAILABLE_TIME, coorte in COORTE)(
-%   assignment[room,time,coorte] <-> scheduling[room, time] = coorte
-% );
+% Tunneling constraint.
+constraint
+forall(room in ROOM, time in 1 .. AVAILABLE_TIME, coorte in COORTE)(
+  assignment[room,time,coorte] <-> scheduling[room, time] = coorte
+);
 
 include "globals.mzn";
 
@@ -49,22 +49,23 @@ predicate sameGroup(ROOM : room1, ROOM : room2) =
 
 predicate sameDep(var COORTE : coorte1, var COORTE : coorte2) =
   department[coorte1] == department[coorte2];
-  
+
+% Simmetry breaking
 % Le coorti dello stesso dipartimento sono allocate nella stessa zona (contigua).
-constraint 
-forall(time in 1 .. AVAILABLE_TIME, dep in DEPARTMENT, room in ROOM)(
-  let 
-  {var COORTE : coorte = scheduling[room, time]}
-  in department[coorte] = dep
-  ->
-  not exists(room2 in ROOM)
-  (
-    let 
-    {var COORTE : coorte2 = scheduling[room2, time]}
-    in sameDep(coorte, coorte2) /\ 
-    not sameGroup(room, room2)
-  )
-);
+% constraint 
+% forall(time in 1 .. AVAILABLE_TIME, dep in DEPARTMENT, room in ROOM)(
+%   let 
+%   {var COORTE : coorte = scheduling[room, time]}
+%   in department[coorte] = dep
+%   ->
+%   not exists(room2 in ROOM)
+%   (
+%     let 
+%     {var COORTE : coorte2 = scheduling[room2, time]}
+%     in sameDep(coorte, coorte2) /\ 
+%     not sameGroup(room, room2)
+%   )
+% );
 
 % ogni coorte necessita di un certo numero di ore alla settimana requiredTime[corte].
 % constraint 
@@ -75,16 +76,39 @@ forall(time in 1 .. AVAILABLE_TIME, dep in DEPARTMENT, room in ROOM)(
 % );
 
 
-solve satisfy;
+solve satisfy;    
 
-output ["K = \(K)\n"] ++ 
-       ["capacity = \(capacity)\n"] ++
-       ["N = \(N)\n"] ++
-       ["nStudents = \(nStudents)\n"] ++
-       ["year = \(year)\n"] ++
-       ["department = \(department)\n"] ++
-       ["requiredTime = \(requiredTime)\n"] ++
-       ["scheduling = \(scheduling)\n"];
+output 
+[
+  "K = \(K)\n" ++ 
+  "capacity = \(capacity)\n" ++
+  "N = \(N)\n" ++
+  "nStudents = \(nStudents)\n" ++
+  "year = \(year)\n" ++
+  "department = \(department)\n" ++
+  "requiredTime = \(requiredTime)\n"
+]
+++ ["\nAssignment matrix monday (room/schedule):"]
+++ ["\n    " ++ show([8.0 + (i*0.5) | i in 1 .. 22])]
+++ ["\n" ++ show(room) ++ "   " ++ show([(scheduling[room,time]) | time in 1 .. 22])
+    | room in ROOM]
+++ ["\nAssignment matrix tuesday (room/schedule):"]
+++ ["\n    " ++ show([8.0 + (i*0.5) | i in 1 .. 22])]
+++ ["\n" ++ show(room) ++ "   " ++ show([(scheduling[room,time]) | time in 22+1 .. 22*2])
+    | room in ROOM]
+++ ["\nAssignment matrix wednesday (room/schedule):"]
+++ ["\n    " ++ show([8.0 + (i*0.5) | i in 1 .. 22])]
+++ ["\n" ++ show(room) ++ "   " ++ show([(scheduling[room,time]) | time in 22*2+1 .. 22*3])
+    | room in ROOM]
+++ ["\nAssignment matrix thursday (room/schedule):"]
+++ ["\n    " ++ show([8.0 + (i*0.5) | i in 1 .. 22])]
+++ ["\n" ++ show(room) ++ "   " ++ show([(scheduling[room,time]) | time in 22*3+1 .. 22*4])
+    | room in ROOM]
+++ ["\nAssignment matrix friday (room/schedule):"]
+++ ["\n    " ++ show([8.0 + (i*0.5) | i in 1 .. 22])]
+++ ["\n" ++ show(room) ++ "   " ++ show([(scheduling[room,time]) | time in 22*4+1 .. 22*5])
+    | room in ROOM]
+;
 
 
 
