@@ -61,6 +61,19 @@ predicate sanification(var 0 .. N : occupant) =
 predicate endOfDay(1 .. AVAILABLE_TIME : time) = 
   time mod DAY_HOURS == 0;
   
+  
+enum SHIFT = {coorte1, sanification, coorte2};
+int : S = card(SHIFT);
+
+int : Q = 3;
+int : q0 = 1;
+set of int : STATE = 1 .. Q;
+
+array[STATE, SHIFT] of int : t =
+  [| 1, 2, 3
+   | 1, 3, 1
+   | 3, 3, 3|];
+   
 constraint 
 forall(time in 1 .. AVAILABLE_TIME, room in ROOM)(
   % Ogni volta che una coorte lascia un'aula c'è bisogno di una sanificazione
@@ -83,6 +96,10 @@ forall(time in 1 .. AVAILABLE_TIME, room in ROOM)(
       in not sanification(occupant2) /\ sameGroup(room, room2) /\ not sameDep(occupant, occupant2)
     )
   )
+  % /\
+  % Gli slot delle lezioni sono sempre di LST unità di tempo.
+  % Linguaggio regolare, potrebbe anche incorporare il vincolo sulla sanificazione.
+  
 );
   
 % ogni coorte necessita di un certo numero di ore alla settimana requiredTime[corte].
