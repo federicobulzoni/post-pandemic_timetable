@@ -57,19 +57,31 @@ predicate sameDep(var COORTE : coorte1, var COORTE : coorte2) =
 
 predicate sanification(var 0 .. N : occupant) =
   occupant == 0;
+
+predicate endOfDay(1 .. AVAILABLE_TIME : time) = 
+  time mod DAY_HOURS == 0;
   
-% Le coorti dello stesso dipartimento sono allocate nella stessa zona (contigua).
 constraint 
-forall(time in 1 .. AVAILABLE_TIME, dep in DEPARTMENT, room in ROOM)(
-  let 
-  {var 0 .. N : occupant = scheduling[room, time]} in 
-  not sanification(occupant) /\ department[occupant] = dep
-  ->
-  not exists(room2 in ROOM)
+forall(time in 1 .. AVAILABLE_TIME, room in ROOM)(
+  % Ogni volta che una coorte lascia un'aula c'è bisogno di una sanificazione
+  % a meno che non sia l'ultima ora del giorno.
   (
+    not endOfDay(time) /\ not sanification(scheduling[room,time]) /\ scheduling[room, time] != scheduling[room, time+1]
+    -> sanification(scheduling[room, time+1])
+  )
+  /\
+  % Le coorti dello stesso dipartimento sono allocate nella stessa zona (contigua).
+  forall(dep in DEPARTMENT)(
     let 
-    {var 0 .. N : occupant2 = scheduling[room2, time]}
-    in not sanification(occupant2) /\ sameGroup(room, room2) /\ not sameDep(occupant, occupant2)
+    {var 0 .. N : occupant = scheduling[room, time]} in 
+    not sanification(occupant) /\ department[occupant] = dep
+    ->
+    not exists(room2 in ROOM)
+    (
+      let 
+      {var 0 .. N : occupant2 = scheduling[room2, time]}
+      in not sanification(occupant2) /\ sameGroup(room, room2) /\ not sameDep(occupant, occupant2)
+    )
   )
 );
   
@@ -84,19 +96,6 @@ constraint
 forall(coorte in COORTE)(
   totTimeAssigned(coorte) >= requiredTime[coorte]
 );
-
-% Ogni volta che una coorte lascia un'aula c'è bisogno di una sanificazione
-% a meno che non sia l'ultima ora del giorno.
-% predicate endOfDay(1 .. AVAILABLE_TIME : time) = 
-%   time mod DAY_HOURS == 0;
-  
-% constraint
-% forall(time in 1 .. AVAILABLE_TIME, room in ROOM)(
-%   not endOfDay(time) /\ scheduling[room, time] != scheduling[room, time+1]
-%   -> sanification(scheduling[room, time+1])
-% );
-
-
 
 solve :: bool_search(assignment, dom_w_deg, indomain_random) satisfy;    
 
