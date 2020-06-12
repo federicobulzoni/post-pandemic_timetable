@@ -12,12 +12,13 @@
 %  lst = 4 u.t, the lesson's slot time that is fixed to four time unit,
 %  o(c_i) = x u.t, for i in [1, N] and x integer, is the time unit amount required by coorte c_i each week.
 
+int : G = 4;
 int : K;
-set of int : ROOM = 1 .. 2*K;
+set of int : ROOM = 1 .. G*K;
 array[ROOM] of int : capacity;
 
 int : N;
-set of int : COORTE = 1 .. N;
+set of int : COORTE = 1 .. N; 
 array[COORTE] of int : nStudents;
 array[COORTE] of 1 .. 3 : year;
 
@@ -25,7 +26,9 @@ int : D;
 set of int : DEPARTMENT = 1 .. D;
 array[COORTE] of DEPARTMENT : department;
 
-int : AVAILABLE_TIME = 22*5; 
+int : DAY_HOURS = 22;
+int : DAYS = 5;
+int : AVAILABLE_TIME = DAY_HOURS*DAYS; 
 int : ST = 1; % Sanification time.
 int : LST = 4; % Lecture slot time.
 
@@ -33,8 +36,8 @@ array[COORTE] of int : requiredTime;
 
 % decision variables:
 % a table where the rows are the classroom, the columns are the time units and the entry are the coorte which occupies the classroom at the specified time unit.
-array[ROOM, 1 .. AVAILABLE_TIME] of var COORTE : scheduling;
-array[ROOM, 1 .. AVAILABLE_TIME, COORTE] of var bool : assignment;
+array[ROOM, 1 .. AVAILABLE_TIME] of var 0 .. N : scheduling;
+array[ROOM, 1 .. AVAILABLE_TIME, 0 .. N] of var bool : assignment;
 
 
 include "globals.mzn";
@@ -42,32 +45,34 @@ include "inverse.mzn";
 
 % Tunneling constraint.
 constraint
-forall(room in ROOM, time in 1 .. AVAILABLE_TIME, coorte in COORTE)(
-  assignment[room,time,coorte] <-> scheduling[room, time] = coorte
+forall(room in ROOM, time in 1 .. AVAILABLE_TIME, occupant in 0 .. N)(
+  assignment[room,time,occupant] <-> scheduling[room, time] = occupant
 );
 
 predicate sameGroup(ROOM : room1, ROOM : room2) = 
-  room1 mod 2 == room2 mod 2;
+  room1 mod G == room2 mod G;
 
 predicate sameDep(var COORTE : coorte1, var COORTE : coorte2) =
   department[coorte1] == department[coorte2];
 
+predicate sanification(var 0 .. N : occupant) =
+  occupant == 0;
+  
 % Le coorti dello stesso dipartimento sono allocate nella stessa zona (contigua).
 constraint 
 forall(time in 1 .. AVAILABLE_TIME, dep in DEPARTMENT, room in ROOM)(
   let 
-  {var COORTE : coorte = scheduling[room, time]}
-  in department[coorte] = dep
+  {var 0 .. N : occupant = scheduling[room, time]} in 
+  not sanification(occupant) /\ department[occupant] = dep
   ->
   not exists(room2 in ROOM)
   (
     let 
-    {var COORTE : coorte2 = scheduling[room2, time]}
-    in sameDep(coorte, coorte2) /\ 
-    not sameGroup(room, room2)
+    {var 0 .. N : occupant2 = scheduling[room2, time]}
+    in not sanification(occupant2) /\ sameGroup(room, room2) /\ not sameDep(occupant, occupant2)
   )
 );
-
+  
 % ogni coorte necessita di un certo numero di ore alla settimana requiredTime[corte].
 function var int : totTimeAssigned (COORTE : coorte) =
   sum(room in ROOM, time in 1 .. AVAILABLE_TIME)(
@@ -79,6 +84,18 @@ constraint
 forall(coorte in COORTE)(
   totTimeAssigned(coorte) >= requiredTime[coorte]
 );
+
+% Ogni volta che una coorte lascia un'aula c'è bisogno di una sanificazione
+% a meno che non sia l'ultima ora del giorno.
+% predicate endOfDay(1 .. AVAILABLE_TIME : time) = 
+%   time mod DAY_HOURS == 0;
+  
+% constraint
+% forall(time in 1 .. AVAILABLE_TIME, room in ROOM)(
+%   not endOfDay(time) /\ scheduling[room, time] != scheduling[room, time+1]
+%   -> sanification(scheduling[room, time+1])
+% );
+
 
 
 solve :: bool_search(assignment, dom_w_deg, indomain_random) satisfy;    
@@ -94,24 +111,24 @@ output
   "requiredTime = \(requiredTime)\n"
 ]
 ++ ["\nAssignment matrix monday (room/schedule):"]
-++ ["\n    " ++ show([8.0 + (i*0.5) | i in 1 .. 22])]
-++ ["\n" ++ show(room) ++ "   " ++ show([(scheduling[room,time]) | time in 1 .. 22])
+++ ["\n    " ++ show([8.0 + (i*0.5) | i in 1 .. DAY_HOURS])]
+++ ["\n" ++ show(room) ++ "   " ++ show([(scheduling[room,time]) | time in 1 .. DAY_HOURS])
     | room in ROOM]
 ++ ["\nAssignment matrix tuesday (room/schedule):"]
-++ ["\n    " ++ show([8.0 + (i*0.5) | i in 1 .. 22])]
-++ ["\n" ++ show(room) ++ "   " ++ show([(scheduling[room,time]) | time in 22+1 .. 22*2])
+++ ["\n    " ++ show([8.0 + (i*0.5) | i in 1 .. DAY_HOURS])]
+++ ["\n" ++ show(room) ++ "   " ++ show([(scheduling[room,time]) | time in DAY_HOURS+1 .. DAY_HOURS*2])
     | room in ROOM]
 ++ ["\nAssignment matrix wednesday (room/schedule):"]
-++ ["\n    " ++ show([8.0 + (i*0.5) | i in 1 .. 22])]
-++ ["\n" ++ show(room) ++ "   " ++ show([(scheduling[room,time]) | time in 22*2+1 .. 22*3])
+++ ["\n    " ++ show([8.0 + (i*0.5) | i in 1 .. DAY_HOURS])]
+++ ["\n" ++ show(room) ++ "   " ++ show([(scheduling[room,time]) | time in DAY_HOURS*2+1 .. DAY_HOURS*3])
     | room in ROOM]
 ++ ["\nAssignment matrix thursday (room/schedule):"]
-++ ["\n    " ++ show([8.0 + (i*0.5) | i in 1 .. 22])]
-++ ["\n" ++ show(room) ++ "   " ++ show([(scheduling[room,time]) | time in 22*3+1 .. 22*4])
+++ ["\n    " ++ show([8.0 + (i*0.5) | i in 1 .. DAY_HOURS])]
+++ ["\n" ++ show(room) ++ "   " ++ show([(scheduling[room,time]) | time in DAY_HOURS*3+1 .. DAY_HOURS*4])
     | room in ROOM]
 ++ ["\nAssignment matrix friday (room/schedule):"]
-++ ["\n    " ++ show([8.0 + (i*0.5) | i in 1 .. 22])]
-++ ["\n" ++ show(room) ++ "   " ++ show([(scheduling[room,time]) | time in 22*4+1 .. 22*5])
+++ ["\n    " ++ show([8.0 + (i*0.5) | i in 1 .. DAY_HOURS])]
+++ ["\n" ++ show(room) ++ "   " ++ show([(scheduling[room,time]) | time in DAY_HOURS*4+1 .. DAY_HOURS*5])
     | room in ROOM]
 ++ ["\n\nTotal time assigned:"]
 ++ ["\nCoorte " ++ show(coorte) ++ " = " ++ show(sum(room in ROOM, time in 1 .. AVAILABLE_TIME)(bool2int(assignment[room, time, coorte]))) ++ " u.t." | coorte in COORTE];
