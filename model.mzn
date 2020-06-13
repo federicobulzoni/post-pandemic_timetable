@@ -64,41 +64,48 @@ predicate sanification(var OCCUPANT : occupant) =
   % 2. quando una coorte lascia l'aula si ha una sanificazione, tale sanificazione
   %    dura una unità di tempo.
 
-% int : Q = 5;
-% int : q0 = 1;
-% set of int : STATE = 1 .. Q;
+int : Q = 5;
+int : q0 = 1;
+set of int : STATE = 1 .. Q;
 
-% enum SHIFT = {sameCoorte, sanification, diffCoorte};
-% int : S = card(SHIFT);
-% array[STATE, SHIFT] of int : t =
-%   [| 2, 5, 2 % state 1
-%    | 3, 0, 0 % state 2
-%    | 4, 0, 0 % state 3
-%    | 1, 0, 0 % state 4
-%    | 2, 0, 2 % state 5
-%   ];
+% enum SHIFT = {sanification, sameCoorte, diffCoorte};
+set of int : SHIFT = {1,2,3}; 
+int : S = card(SHIFT);
+array[STATE, SHIFT] of int : t =
+  [| 5, 2, 0 % state 1
+   | 0, 3, 0 % state 2
+   | 0, 4, 0 % state 3
+   | 0, 1, 0 % state 4
+   | 0, 2, 2 % state 5
+  |];
 
-% constraint
-% forall (day in 1 .. DAYS)(
-%   forall (room in ROOM)(
-%     % Riga corrispondente al giorno day per l'aula room.
-%     let {
-%       array[1 .. DAY_HOURS] of 0 .. N : schedulingRoomDay = [scheduling[room, time] | time in (day-1)*DAY_HOURS + 1 .. day*DAY_HOURS]
-%     }
-%     in 
-%   )
-%)
+set of int : FINAL = {1, 5};
+
+array [ROOM, DAY, TIMEUNIT] of var SHIFT : shift;
 
 
-constraint 
-forall(room in ROOM, day in DAY, timeunit in 1 .. TIMEUNIT_X_DAY - 1)(
-  % Ogni volta che una coorte lascia un'aula c'è bisogno di una sanificazione
-  % a meno che non sia l'ultima ora del giorno.
-  (
-    not sanification(scheduling[room,day,timeunit]) /\ scheduling[room, day, timeunit] != scheduling[room, day, timeunit+1]
-    -> sanification(scheduling[room, day, timeunit+1])
-  )
-);
+% inizializzazione tensore shift.
+constraint
+  forall(room in ROOM, day in DAY)(
+    ( shift[room, day, 1] = 1 <-> sanification(scheduling[room, day, 1]) )
+    /\
+    ( not sanification(scheduling[room, day, 1]) -> shift[room, day, 1] = 2 ) % deve essere così per via della funzione di transizione.
+  );
+  
+constraint
+  forall(room in ROOM, day in DAY, timeunit in 1 .. TIMEUNIT_X_DAY - 1)(
+    ( (shift[room, day, timeunit + 1] = 1) <-> sanification(scheduling[room, day, timeunit + 1]) )
+    /\
+    ( (shift[room, day, timeunit + 1] = 2) <-> ( scheduling[room, day, timeunit + 1] = scheduling[room, day, timeunit] ) )
+  );
+
+% vincolo di regolarità.
+constraint
+  forall (room in ROOM, day in DAY)(
+     % Riga di cui bisogna controllare la regolarità.
+     % tuttavia dovrebbe essere sotto forma di shift.
+     regular([shift[room, day, timeunit] | timeunit in TIMEUNIT], Q, S, t, q0, FINAL) 
+  );
 
 constraint
   % Le coorti dello stesso dipartimento sono allocate nella stessa zona (contigua).
@@ -123,9 +130,9 @@ function var int : totTimeAssigned (COORTE : coorte) =
 
   
 constraint 
-forall(coorte in COORTE)(
-  totTimeAssigned(coorte) >= requiredTime[coorte]
-);
+  forall(coorte in COORTE)(
+    totTimeAssigned(coorte) >= requiredTime[coorte]
+  );
 
 solve :: bool_search(assignment, dom_w_deg, indomain_random) satisfy;    
 
@@ -147,6 +154,10 @@ output
 ++ ["  " ++ show(time) | time in humanTU]
 ++ ["\n" ++ show(room) ++ " " ++ show([scheduling[room, 1, timeunit] | timeunit in TIMEUNIT]) | room in ROOM]
 ++ ["\n"]
+++ ["\nShift matrix Monday (room, schedule):"]
+++ ["\n"]
+++ ["  " ++ show(time) | time in humanTU]
+++ ["\n" ++ show(room) ++ " " ++ show([shift[room, 1, timeunit] | timeunit in TIMEUNIT]) | room in ROOM]
 
 ++ ["\nAssignment matrix Tuesday (room/schedule):"]
 ++ ["\n"]
@@ -173,11 +184,5 @@ output
 ++ ["\n"]
 
 ++ ["\n\nTotal time assigned:"]
-++ ["\nCoorte " ++ show(coorte) ++ " = " ++ show(sum(room in ROOM, day in DAY, timeunit in TIMEUNIT)(bool2int(assignment[room, day, timeunit, coorte]))) ++ " u.t." | coorte in COORTE];
-
-
-
-
-
-
+++ ["\nCoorte " ++ show(coorte) ++ " = " ++ show(sum(room in ROOM, day in DAY, timeunit in TIMEUNIT)(bool2int(assignment[room, day, timeunit, coorte]))) ++ " u.t." | coorte in COORTE]
 
