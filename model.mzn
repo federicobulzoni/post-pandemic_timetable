@@ -26,18 +26,18 @@ int : D;
 set of int : DEPARTMENT = 1 .. D;
 array[COORTE] of DEPARTMENT : department;
 
-int : DAY_HOURS = 22;
-int : DAYS = 5;
-int : AVAILABLE_TIME = DAY_HOURS*DAYS; 
-int : ST = 1; % Sanification time.
-int : LST = 4; % Lecture slot time.
+int : TIMEUNIT_X_DAY = 22;
+set of int : TIMEUNIT = 1 .. TIMEUNIT_X_DAY;
+int : N_DAYS = 5;
+set of int : DAY = 1 .. N_DAYS;
 
 array[COORTE] of int : requiredTime;
 
 % decision variables:
 % a table where the rows are the classroom, the columns are the time units and the entry are the coorte which occupies the classroom at the specified time unit.
-array[ROOM, 1 .. AVAILABLE_TIME] of var 0 .. N : scheduling;
-array[ROOM, 1 .. AVAILABLE_TIME, 0 .. N] of var bool : assignment;
+set of int : OCCUPANT = 0 .. N; % 0 is the sanification.
+array[ROOM, DAY, TIMEUNIT] of var OCCUPANT : scheduling;
+array[ROOM, DAY, TIMEUNIT, OCCUPANT] of var bool : assignment;
 
 
 include "globals.mzn";
@@ -45,9 +45,10 @@ include "inverse.mzn";
 
 % Tunneling constraint.
 constraint
-forall(room in ROOM, time in 1 .. AVAILABLE_TIME, occupant in 0 .. N)(
-  assignment[room,time,occupant] <-> scheduling[room, time] = occupant
+forall(room in ROOM, day in DAY, timeunit in TIMEUNIT, occupant in OCCUPANT)(
+  assignment[room,day,timeunit,occupant] <-> scheduling[room,day,timeunit] = occupant
 );
+
 
 predicate sameGroup(ROOM : room1, ROOM : room2) = 
   room1 mod G == room2 mod G;
@@ -55,56 +56,69 @@ predicate sameGroup(ROOM : room1, ROOM : room2) =
 predicate sameDep(var COORTE : coorte1, var COORTE : coorte2) =
   department[coorte1] == department[coorte2];
 
-predicate sanification(var 0 .. N : occupant) =
+predicate sanification(var OCCUPANT : occupant) =
   occupant == 0;
-
-predicate endOfDay(1 .. AVAILABLE_TIME : time) = 
-  time mod DAY_HOURS == 0;
   
-  
-enum SHIFT = {coorte1, sanification, coorte2};
-int : S = card(SHIFT);
+% Costruzione automa per il riconoscimento dei pattern:
+  % 1. Gli slot delle lezioni sono da 4 unità di tempo,
+  % 2. quando una coorte lascia l'aula si ha una sanificazione, tale sanificazione
+  %    dura una unità di tempo.
 
-int : Q = 2;
-int : q0 = 1;
-set of int : STATE = 1 .. Q;
+% int : Q = 5;
+% int : q0 = 1;
+% set of int : STATE = 1 .. Q;
 
-array[STATE, SHIFT] of int : t =
-  [| 1, 2, 0
-   | 1, 0, 1|];
+% enum SHIFT = {sameCoorte, sanification, diffCoorte};
+% int : S = card(SHIFT);
+% array[STATE, SHIFT] of int : t =
+%   [| 2, 5, 2 % state 1
+%    | 3, 0, 0 % state 2
+%    | 4, 0, 0 % state 3
+%    | 1, 0, 0 % state 4
+%    | 2, 0, 2 % state 5
+%   ];
+
+% constraint
+% forall (day in 1 .. DAYS)(
+%   forall (room in ROOM)(
+%     % Riga corrispondente al giorno day per l'aula room.
+%     let {
+%       array[1 .. DAY_HOURS] of 0 .. N : schedulingRoomDay = [scheduling[room, time] | time in (day-1)*DAY_HOURS + 1 .. day*DAY_HOURS]
+%     }
+%     in 
+%   )
+%)
+
 
 constraint 
-forall(time in 1 .. AVAILABLE_TIME, room in ROOM)(
+forall(room in ROOM, day in DAY, timeunit in 1 .. TIMEUNIT_X_DAY - 1)(
   % Ogni volta che una coorte lascia un'aula c'è bisogno di una sanificazione
   % a meno che non sia l'ultima ora del giorno.
   (
-    not endOfDay(time) /\ not sanification(scheduling[room,time]) /\ scheduling[room, time] != scheduling[room, time+1]
-    -> sanification(scheduling[room, time+1])
+    not sanification(scheduling[room,day,timeunit]) /\ scheduling[room, day, timeunit] != scheduling[room, day, timeunit+1]
+    -> sanification(scheduling[room, day, timeunit+1])
   )
-  /\
+);
+
+constraint
   % Le coorti dello stesso dipartimento sono allocate nella stessa zona (contigua).
-  forall(dep in DEPARTMENT)(
+  forall(room in ROOM, day in DAY, timeunit in TIMEUNIT, dep in DEPARTMENT)(
     let 
-    {var 0 .. N : occupant = scheduling[room, time]} in 
+    {var OCCUPANT : occupant = scheduling[room, day, timeunit]} in 
     not sanification(occupant) /\ department[occupant] = dep
     ->
     not exists(room2 in ROOM)
     (
       let 
-      {var 0 .. N : occupant2 = scheduling[room2, time]}
+      {var OCCUPANT : occupant2 = scheduling[room2, day, timeunit]}
       in not sanification(occupant2) /\ sameGroup(room, room2) /\ not sameDep(occupant, occupant2)
     )
-  )
-  % /\
-  % Gli slot delle lezioni sono sempre di LST unità di tempo.
-  % Linguaggio regolare, potrebbe anche incorporare il vincolo sulla sanificazione.
-  
-);
+  );
   
 % ogni coorte necessita di un certo numero di ore alla settimana requiredTime[corte].
 function var int : totTimeAssigned (COORTE : coorte) =
-  sum(room in ROOM, time in 1 .. AVAILABLE_TIME)(
-    bool2int(assignment[room, time, coorte])
+  sum(room in ROOM, day in DAY, timeunit in TIMEUNIT)(
+    bool2int(assignment[room, day, timeunit, coorte])
   );
 
   
@@ -114,6 +128,9 @@ forall(coorte in COORTE)(
 );
 
 solve :: bool_search(assignment, dom_w_deg, indomain_random) satisfy;    
+
+array[TIMEUNIT] of float : humanTU :: output_only = 
+  [8.0 + 0.5*timeunit | timeunit in TIMEUNIT];
 
 output 
 [
@@ -125,28 +142,38 @@ output
   "department = \(department)\n" ++
   "requiredTime = \(requiredTime)\n"
 ]
-++ ["\nAssignment matrix monday (room/schedule):"]
-++ ["\n    " ++ show([8.0 + (i*0.5) | i in 1 .. DAY_HOURS])]
-++ ["\n" ++ show(room) ++ "   " ++ show([(scheduling[room,time]) | time in 1 .. DAY_HOURS])
-    | room in ROOM]
-++ ["\nAssignment matrix tuesday (room/schedule):"]
-++ ["\n    " ++ show([8.0 + (i*0.5) | i in 1 .. DAY_HOURS])]
-++ ["\n" ++ show(room) ++ "   " ++ show([(scheduling[room,time]) | time in DAY_HOURS+1 .. DAY_HOURS*2])
-    | room in ROOM]
-++ ["\nAssignment matrix wednesday (room/schedule):"]
-++ ["\n    " ++ show([8.0 + (i*0.5) | i in 1 .. DAY_HOURS])]
-++ ["\n" ++ show(room) ++ "   " ++ show([(scheduling[room,time]) | time in DAY_HOURS*2+1 .. DAY_HOURS*3])
-    | room in ROOM]
-++ ["\nAssignment matrix thursday (room/schedule):"]
-++ ["\n    " ++ show([8.0 + (i*0.5) | i in 1 .. DAY_HOURS])]
-++ ["\n" ++ show(room) ++ "   " ++ show([(scheduling[room,time]) | time in DAY_HOURS*3+1 .. DAY_HOURS*4])
-    | room in ROOM]
-++ ["\nAssignment matrix friday (room/schedule):"]
-++ ["\n    " ++ show([8.0 + (i*0.5) | i in 1 .. DAY_HOURS])]
-++ ["\n" ++ show(room) ++ "   " ++ show([(scheduling[room,time]) | time in DAY_HOURS*4+1 .. DAY_HOURS*5])
-    | room in ROOM]
+++ ["\nAssignment matrix Monday (room/schedule):"]
+++ ["\n"]
+++ ["  " ++ show(time) | time in humanTU]
+++ ["\n" ++ show(room) ++ " " ++ show([scheduling[room, 1, timeunit] | timeunit in TIMEUNIT]) | room in ROOM]
+++ ["\n"]
+
+++ ["\nAssignment matrix Tuesday (room/schedule):"]
+++ ["\n"]
+++ ["  " ++ show(time) | time in humanTU]
+++ ["\n" ++ show(room) ++ " " ++ show([scheduling[room, 2, timeunit] | timeunit in TIMEUNIT]) | room in ROOM]
+++ ["\n"]
+
+++ ["\nAssignment matrix Wednesday (room/schedule):"]
+++ ["\n"]
+++ ["  " ++ show(time) | time in humanTU]
+++ ["\n" ++ show(room) ++ " " ++ show([scheduling[room, 3, timeunit] | timeunit in TIMEUNIT]) | room in ROOM]
+++ ["\n"]
+
+++ ["\nAssignment matrix Thursday (room/schedule):"]
+++ ["\n"]
+++ ["  " ++ show(time) | time in humanTU]
+++ ["\n" ++ show(room) ++ " " ++ show([scheduling[room, 4, timeunit] | timeunit in TIMEUNIT]) | room in ROOM]
+++ ["\n"]
+
+++ ["\nAssignment matrix Friday (room/schedule):"]
+++ ["\n"]
+++ ["  " ++ show(time) | time in humanTU]
+++ ["\n" ++ show(room) ++ " " ++ show([scheduling[room, 5, timeunit] | timeunit in TIMEUNIT]) | room in ROOM]
+++ ["\n"]
+
 ++ ["\n\nTotal time assigned:"]
-++ ["\nCoorte " ++ show(coorte) ++ " = " ++ show(sum(room in ROOM, time in 1 .. AVAILABLE_TIME)(bool2int(assignment[room, time, coorte]))) ++ " u.t." | coorte in COORTE];
+++ ["\nCoorte " ++ show(coorte) ++ " = " ++ show(sum(room in ROOM, day in DAY, timeunit in TIMEUNIT)(bool2int(assignment[room, day, timeunit, coorte]))) ++ " u.t." | coorte in COORTE];
 
 
 
