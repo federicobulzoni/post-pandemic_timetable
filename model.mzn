@@ -41,20 +41,12 @@ array[ROOM, DAY, TIMEUNIT, OCCUPANT] of var bool : assignment;
 
 
 include "globals.mzn";
-include "inverse.mzn";
 
 % Tunneling constraint.
 constraint
 forall(room in ROOM, day in DAY, timeunit in TIMEUNIT, occupant in OCCUPANT)(
   assignment[room,day,timeunit,occupant] <-> scheduling[room,day,timeunit] = occupant
 );
-
-
-predicate sameGroup(ROOM : room1, ROOM : room2) = 
-  room1 mod G == room2 mod G;
-
-predicate sameDep(var COORTE : coorte1, var COORTE : coorte2) =
-  department[coorte1] == department[coorte2];
 
 predicate sanification(var OCCUPANT : occupant) =
   occupant == 0;
@@ -64,12 +56,13 @@ predicate sanification(var OCCUPANT : occupant) =
   % 2. quando una coorte lascia l'aula si ha una sanificazione, tale sanificazione
   %    dura una unità di tempo.
 
+
 int : Q = 5;
 int : q0 = 1;
 set of int : STATE = 1 .. Q;
 
-% enum SHIFT = {sanification, sameCoorte, diffCoorte};
-set of int : SHIFT = {1,2,3}; 
+enum SHIFT = {sanification, sameCoorte, diffCoorte};
+% set of int : SHIFT = {1,2,3}; 
 int : S = card(SHIFT);
 array[STATE, SHIFT] of int : t =
   [| 5, 2, 0 % state 1
@@ -102,11 +95,15 @@ constraint
 % vincolo di regolarità.
 constraint
   forall (room in ROOM, day in DAY)(
-     % Riga di cui bisogna controllare la regolarità.
-     % tuttavia dovrebbe essere sotto forma di shift.
      regular([shift[room, day, timeunit] | timeunit in TIMEUNIT], Q, S, t, q0, FINAL) 
   );
 
+predicate sameGroup(ROOM : room1, ROOM : room2) = 
+  room1 mod G == room2 mod G;
+
+predicate sameDep(var COORTE : coorte1, var COORTE : coorte2) =
+  department[coorte1] == department[coorte2];
+  
 constraint
   % Le coorti dello stesso dipartimento sono allocate nella stessa zona (contigua).
   forall(room in ROOM, day in DAY, timeunit in TIMEUNIT, dep in DEPARTMENT)(
@@ -122,23 +119,39 @@ constraint
     )
   );
   
-% ogni coorte necessita di un certo numero di ore alla settimana requiredTime[corte].
-function var int : totTimeAssigned (COORTE : coorte) =
-  sum(room in ROOM, day in DAY, timeunit in TIMEUNIT)(
-    bool2int(assignment[room, day, timeunit, coorte])
+
+function var int : timeAssigned(OCCUPANT : occupant) = 
+   count([scheduling[room, day, timeunit] | room in ROOM, day in DAY, timeunit in TIMEUNIT], occupant);
+   
+function var int : capacityAssigned(COORTE : coorte) = 
+  sum(room in ROOM)( (count([scheduling[room, day, timeunit] | day in DAY, timeunit in TIMEUNIT], coorte) div 4) * capacity[room] );
+  
+  
+  
+% Ogni coorte ha un certo di tempo di lezione minimo da svolgere in presenza ogni settimana.
+constraint
+  forall(coorte in COORTE)(
+    timeAssigned(coorte) >= requiredTime[coorte]
+  );
+                  
+% Organizzare l’orario in modo che ogni studente del primo anno di ogni corso abbia almeno una mattinata o un pomeriggio di lezione in presenza alla settimana.
+constraint
+  forall(coorte in COORTE)(
+    year[coorte] = 1 -> capacityAssigned(coorte) >= nStudents[coorte]
   );
 
-  
-constraint 
-  forall(coorte in COORTE)(
-    totTimeAssigned(coorte) >= requiredTime[coorte]
-  );
 
 solve :: bool_search(assignment, dom_w_deg, indomain_random) satisfy;    
 
 array[TIMEUNIT] of float : humanTU :: output_only = 
   [8.0 + 0.5*timeunit | timeunit in TIMEUNIT];
 
+array [OCCUPANT] of int : timeAssignedOut :: output_only = 
+  [count([fix(scheduling[room, day, timeunit]) | room in ROOM, day in DAY, timeunit in TIMEUNIT], occupant) | occupant in OCCUPANT];
+ 
+array [COORTE] of int : capacityAssignedOut :: output_only = 
+  [sum(room in ROOM)( (count([fix(scheduling[room, day, timeunit]) | day in DAY, timeunit in TIMEUNIT], coorte) div 4) * capacity[room] ) | coorte in COORTE];
+  
 output 
 [
   "K = \(K)\n" ++ 
@@ -154,10 +167,6 @@ output
 ++ ["  " ++ show(time) | time in humanTU]
 ++ ["\n" ++ show(room) ++ " " ++ show([scheduling[room, 1, timeunit] | timeunit in TIMEUNIT]) | room in ROOM]
 ++ ["\n"]
-++ ["\nShift matrix Monday (room, schedule):"]
-++ ["\n"]
-++ ["  " ++ show(time) | time in humanTU]
-++ ["\n" ++ show(room) ++ " " ++ show([shift[room, 1, timeunit] | timeunit in TIMEUNIT]) | room in ROOM]
 
 ++ ["\nAssignment matrix Tuesday (room/schedule):"]
 ++ ["\n"]
@@ -184,5 +193,10 @@ output
 ++ ["\n"]
 
 ++ ["\n\nTotal time assigned:"]
-++ ["\nCoorte " ++ show(coorte) ++ " = " ++ show(sum(room in ROOM, day in DAY, timeunit in TIMEUNIT)(bool2int(assignment[room, day, timeunit, coorte]))) ++ " u.t." | coorte in COORTE]
+++ ["\nCoorte " ++ show(coorte) ++ " = " ++ show(timeAssignedOut[coorte]) ++ " u.t." | coorte in COORTE]
+++ ["\n"]
+
+++ ["\nTotal capacity assigned:"]
+++ ["\nCoorte " ++ show(coorte) ++ " = " ++ show(capacityAssignedOut[coorte]) ++ " people." | coorte in COORTE]
+
 
