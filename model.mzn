@@ -49,63 +49,94 @@ include "globals.mzn";
 predicate sanification(var OCCUPANT : occupant) =
   occupant == 0;
 
-% Simmetry breaking
-% Imponiamo che non ci siano sanificazioni all'inizio ed alla fine della giornata.
-constraint
-  forall(room in ROOM, day in DAY)(
-    not (
-      sanification(scheduling[room,day,1]) 
-      \/ 
-      sanification(scheduling[room,day,TIMEUNIT_X_DAY])
-    )
-  );
-
-  
 % Costruzione automa per il riconoscimento dei pattern:
   % 1. Gli slot delle lezioni sono da 4 unità di tempo,
   % 2. quando una coorte lascia l'aula si ha una sanificazione, tale sanificazione
   %    dura due unità di tempo.
-int : Q = 6;
-int : q0 = 1;
-set of int : STATE = 1 .. Q;
+% int : Q = 6;
+% int : q0 = 1;
+% set of int : STATE = 1 .. Q;
 
 % enum SHIFT = {sanification, sameCoorte, diffCoorte};
-set of int : SHIFT = {1,2,3}; 
-int : S = card(SHIFT);
-% Si noti che non è permesso fare due sanificazioni di fila in un aula, questo non potrebbe in alcun modo offrire un vantaggio. Allo stesso modo non è consentito svolgere una sanificazione senza un effettivo cambio di coorte.
-array[STATE, SHIFT] of int : t =
-  [| 5, 2, 0 % state 1
-   | 0, 3, 0 % state 2
-   | 0, 4, 0 % state 3
-   | 0, 1, 0 % state 4
-   | 6, 0, 0 % state 5
-   | 0, 2, 2 % state 6
-  |];
+% set of int : SHIFT = {1,2,3}; 
+% int : S = card(SHIFT);
+% % Si noti che non è permesso fare due sanificazioni di fila in un aula, questo non potrebbe in alcun modo offrire un vantaggio. 
+% % Imponiamo che non ci siano sanificazioni all'inizio ed alla fine della giornata.
+% array[STATE, SHIFT] of int : t =
+%   %san same diff
+%   [| 0, 0, 2 % state 1
+%    | 0, 3, 0 % state 2
+%    | 0, 4, 0 % state 3
+%    | 0, 5, 0 % state 4
+%    | 6, 2, 0 % state 5
+%    | 1, 0, 0 % state 6
+%   |];
 
-set of int : FINAL = {1};
-array [ROOM, DAY, TIMEUNIT] of var SHIFT : shift;
+% set of int : FINAL = {5};
+% array [ROOM, DAY, TIMEUNIT] of var SHIFT : shift;
 
 % inizializzazione tensore shift.
-constraint
-  forall(room in ROOM, day in DAY)(
-    shift[room,day,1] = 1 <-> sanification(scheduling[room,day,1]) 
-    /\
-    ( not sanification(scheduling[room, day, 1]) -> shift[room, day, 1] = 2 ) % deve essere così per via della funzione di transizione.
-  );
+% constraint
+%   forall(room in ROOM, day in DAY)(
+%     ( shift[room,day,1] = 1 <-> sanification(scheduling[room,day,1]) )
+%     /\
+%     ( not sanification(scheduling[room, day, 1]) <-> shift[room, day, 1] = 3 ) % deve essere così per via della funzione di transizione.
+%   );
   
-constraint
-   forall(room in ROOM, day in DAY, timeunit in 1 .. TIMEUNIT_X_DAY - 1)(
-     ( shift[room,day,timeunit+1] = 1 <-> sanification(scheduling[room,day,timeunit+1]) )
-     /\ 
-     ( shift[room,day,timeunit+1] = 2 <-> not sanification(scheduling[room,day,timeunit+1]) /\ scheduling[room,day,timeunit+1] = scheduling[room,day,timeunit] ) 
+% constraint
+%    forall(room in ROOM, day in DAY, timeunit in 1 .. TIMEUNIT_X_DAY - 1)(
+%      ( shift[room,day,timeunit+1] = 1 <-> sanification(scheduling[room,day,timeunit+1]) )
+%      /\ 
+%      ( shift[room,day,timeunit+1] = 2 <-> not sanification(scheduling[room,day,timeunit+1]) /\ scheduling[room,day,timeunit+1] = scheduling[room,day,timeunit] ) 
         
-   );
+%    );
 
 
-% vincolo di regolarità.
+function int : buildState (int : s, int : o) =
+  (s - 1)*(N + 1) + (o + 1);
+  
+% Se gli shift fossero direttamente gli occupant?
+int : Q = 6 * (N + 1);
+% stateF = (state - 1)*(N+1) + (occ + 1)
+int : q0 = (1 - 1)*(N+1) + (0 + 1);  % Stato 1, occ 0
+set of int : STATE = 1 .. Q;
+int : S = N+1;
+
+array[STATE, OCCUPANT] of int : t = array2d(STATE, OCCUPANT,
+  [
+    if state = 1
+      then 
+      if oldOcc = 0 \/ (occ != 0 /\ oldOcc != occ)
+        then buildState(2, occ)
+        else 0
+      endif
+    elseif state > 1 /\ state < 5
+      then
+      if occ != 0 /\ oldOcc = occ
+        then buildState(state+1, oldOcc)
+        else 0
+      endif
+    elseif state = 5
+      then
+      if occ = 0
+        then buildState(6, oldOcc)
+      elseif occ != 0 /\ occ = oldOcc
+          then buildState(2, oldOcc)
+      else 0
+      endif
+    else % stato 6.
+      if occ = 0
+        then buildState(1, oldOcc)
+        else 0
+      endif
+    endif
+  | state in 1..6, oldOcc in OCCUPANT, occ in OCCUPANT]);
+
+set of int : FINAL = {buildState(5, o) | o in OCCUPANT};
+
 constraint
   forall (room in ROOM, day in DAY)(
-     regular([shift[room, day, timeunit] | timeunit in TIMEUNIT], Q, S, t, q0, FINAL) 
+     regular([scheduling[room, day, timeunit] | timeunit in TIMEUNIT], Q, OCCUPANT, t, q0, FINAL) 
   );
   
 predicate sameGroup(ROOM : room1, ROOM : room2) = 
