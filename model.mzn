@@ -40,56 +40,8 @@ array[ROOM, DAY, TIMEUNIT] of var OCCUPANT : scheduling;
 
 include "globals.mzn";
 
-% Tunneling constraint.
-% constraint
-% forall(room in ROOM, day in DAY, timeunit in TIMEUNIT, occupant in OCCUPANT)(
-%   assignment[room,day,timeunit,occupant] <-> scheduling[room,day,timeunit] = occupant
-% );
-
 predicate sanification(var OCCUPANT : occupant) =
   occupant == 0;
-
-% Costruzione automa per il riconoscimento dei pattern:
-  % 1. Gli slot delle lezioni sono da 4 unità di tempo,
-  % 2. quando una coorte lascia l'aula si ha una sanificazione, tale sanificazione
-  %    dura due unità di tempo.
-% int : Q = 6;
-% int : q0 = 1;
-% set of int : STATE = 1 .. Q;
-
-% enum SHIFT = {sanification, sameCoorte, diffCoorte};
-% set of int : SHIFT = {1,2,3}; 
-% int : S = card(SHIFT);
-% % Si noti che non è permesso fare due sanificazioni di fila in un aula, questo non potrebbe in alcun modo offrire un vantaggio. 
-% % Imponiamo che non ci siano sanificazioni all'inizio ed alla fine della giornata.
-% array[STATE, SHIFT] of int : t =
-%   %san same diff
-%   [| 0, 0, 2 % state 1
-%    | 0, 3, 0 % state 2
-%    | 0, 4, 0 % state 3
-%    | 0, 5, 0 % state 4
-%    | 6, 2, 0 % state 5
-%    | 1, 0, 0 % state 6
-%   |];
-
-% set of int : FINAL = {5};
-% array [ROOM, DAY, TIMEUNIT] of var SHIFT : shift;
-
-% inizializzazione tensore shift.
-% constraint
-%   forall(room in ROOM, day in DAY)(
-%     ( shift[room,day,1] = 1 <-> sanification(scheduling[room,day,1]) )
-%     /\
-%     ( not sanification(scheduling[room, day, 1]) <-> shift[room, day, 1] = 3 ) % deve essere così per via della funzione di transizione.
-%   );
-  
-% constraint
-%    forall(room in ROOM, day in DAY, timeunit in 1 .. TIMEUNIT_X_DAY - 1)(
-%      ( shift[room,day,timeunit+1] = 1 <-> sanification(scheduling[room,day,timeunit+1]) )
-%      /\ 
-%      ( shift[room,day,timeunit+1] = 2 <-> not sanification(scheduling[room,day,timeunit+1]) /\ scheduling[room,day,timeunit+1] = scheduling[room,day,timeunit] ) 
-        
-%    );
 
 
 function int : buildState (int : s, int : o) =
@@ -102,6 +54,12 @@ int : q0 = (1 - 1)*(N+1) + (0 + 1);  % Stato 1, occ 0
 set of int : STATE = 1 .. Q;
 int : S = N+1;
 
+% Costruzione automa per il riconoscimento dei pattern:
+  % 1. Gli slot delle lezioni sono da 4 unità di tempo,
+  % 2. quando una coorte lascia l'aula si ha una sanificazione, tale sanificazione
+  %    dura due unità di tempo.
+  % 3. si noti che non è permesso fare due sanificazioni di fila in un aula, questo non potrebbe in alcun modo offrire un vantaggio. 
+  % 4. imponiamo che non ci siano sanificazioni all'inizio ed alla fine della giornata.
 array[STATE, OCCUPANT] of int : t = array2d(STATE, OCCUPANT,
   [
     if state = 1
@@ -134,6 +92,7 @@ array[STATE, OCCUPANT] of int : t = array2d(STATE, OCCUPANT,
 
 set of int : FINAL = {buildState(5, o) | o in OCCUPANT};
 
+% Vincolo di regolarità.
 constraint
   forall (room in ROOM, day in DAY)(
      regular([scheduling[room, day, timeunit] | timeunit in TIMEUNIT], Q, OCCUPANT, t, q0, FINAL) 
@@ -208,9 +167,6 @@ function var float : percentageUnsatisfiedDep(DEPARTMENT : dep) =
   
 % SEARCH
 solve :: int_search(scheduling, dom_w_deg, indomain_random)  minimize (timeAssigned(0) / (TIMEUNIT_X_DAY * N_DAYS)) + abs(max(dep in DEPWITHNEXTYEARS)(percentageUnsatisfiedDep(dep)) - min(dep in DEPWITHNEXTYEARS)(percentageUnsatisfiedDep(dep)));
-
-% minimizzare la differenza tra il max e il minimo.
-% oppure la media se si riesce.
 
 % OUTPUT
 array[TIMEUNIT] of float : humanTU :: output_only = 
