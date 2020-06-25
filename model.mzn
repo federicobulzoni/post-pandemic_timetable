@@ -37,9 +37,6 @@ array[COORTE] of int : requiredTime;
 % a table where the rows are the classroom, the columns are the time units and the entry are the coorte which occupies the classroom at the specified time unit.
 set of int : OCCUPANT = 0 .. N; % 0 is the sanification.
 array[ROOM, DAY, TIMEUNIT] of var OCCUPANT : scheduling;
-% array[ROOM, DAY, TIMEUNIT, OCCUPANT] of var bool : assignment;
-%var 0.0 .. 1.0 : k;
-
 
 include "globals.mzn";
 
@@ -56,8 +53,13 @@ predicate sanification(var OCCUPANT : occupant) =
 % Imponiamo che non ci siano sanificazioni all'inizio ed alla fine della giornata.
 constraint
   forall(room in ROOM, day in DAY)(
-    not (sanification(scheduling[room,day,1]) \/ sanification(scheduling[room,day,TIMEUNIT_X_DAY]))
+    not (
+      sanification(scheduling[room,day,1]) 
+      \/ 
+      sanification(scheduling[room,day,TIMEUNIT_X_DAY])
+    )
   );
+
   
 % Costruzione automa per il riconoscimento dei pattern:
   % 1. Gli slot delle lezioni sono da 4 unità di tempo,
@@ -80,7 +82,7 @@ array[STATE, SHIFT] of int : t =
    | 0, 2, 2 % state 6
   |];
 
-set of int : FINAL = {1,6};
+set of int : FINAL = {1};
 array [ROOM, DAY, TIMEUNIT] of var SHIFT : shift;
 
 % inizializzazione tensore shift.
@@ -94,10 +96,12 @@ constraint
 constraint
    forall(room in ROOM, day in DAY, timeunit in 1 .. TIMEUNIT_X_DAY - 1)(
      ( shift[room,day,timeunit+1] = 1 <-> sanification(scheduling[room,day,timeunit+1]) )
-     /\
+     /\ 
      ( shift[room,day,timeunit+1] = 2 <-> not sanification(scheduling[room,day,timeunit+1]) /\ scheduling[room,day,timeunit+1] = scheduling[room,day,timeunit] ) 
+        
    );
-   
+
+
 % vincolo di regolarità.
 constraint
   forall (room in ROOM, day in DAY)(
@@ -177,13 +181,12 @@ solve :: int_search(scheduling, dom_w_deg, indomain_random)  minimize (timeAssig
 % minimizzare la differenza tra il max e il minimo.
 % oppure la media se si riesce.
 
-
 % OUTPUT
 array[TIMEUNIT] of float : humanTU :: output_only = 
   [8.0 + 0.5*timeunit | timeunit in TIMEUNIT];
 
-array [OCCUPANT] of int : timeAssignedOut :: output_only = 
-  [count([fix(scheduling[room, day, timeunit]) | room in ROOM, day in DAY, timeunit in TIMEUNIT], occupant) | occupant in OCCUPANT];
+array [COORTE] of int : timeAssignedOut :: output_only = 
+  [count([fix(scheduling[room, day, timeunit]) | room in ROOM, day in DAY, timeunit in TIMEUNIT], coorte) | coorte in COORTE];
  
 array [COORTE] of int : satisfiedStudentsOut :: output_only = 
   [let {int : x = sum(room in ROOM)( (count([fix(scheduling[room, day, timeunit]) | day in DAY, timeunit in TIMEUNIT], coorte) div 4) * capacity[room] ) } 
@@ -192,7 +195,7 @@ array [COORTE] of int : satisfiedStudentsOut :: output_only =
     then nStudents[coorte]
     else x
   endif | coorte in COORTE];
-  
+
   
 array [DEPARTMENT] of float : percentageUnsatisfiedOut :: output_only = 
   [
@@ -207,7 +210,10 @@ array [DEPARTMENT] of float : percentageUnsatisfiedOut :: output_only =
   } in
   perc | dep in DEPARTMENT];
       
-int : totalSanificationTimeOut :: output_only = count([fix(scheduling[room, day, timeunit]) | room in ROOM, day in DAY, timeunit in TIMEUNIT], 0); 
+      
+int : sanificationTimeOut :: output_only =
+  count([fix(scheduling[room, day, timeunit]) | room in ROOM, day in DAY, timeunit in TIMEUNIT], 0);
+
 output 
 [
   "K = \(K)\n" ++ 
@@ -256,7 +262,7 @@ output
 ++ ["\nCoorte " ++ show(coorte) ++ " = " ++ show(satisfiedStudentsOut[coorte]) ++ " people." | coorte in COORTE]
 ++ ["\n"]
 
-++ ["\nTotal sanification time: " ++ show(totalSanificationTimeOut) ++ "u.t."]
+++ ["\nTotal sanification time: " ++ show(sanificationTimeOut) ++ "u.t."]
 ++ ["\n"]
 
 ++ ["\nDepartments with classes not at their first year: " ++ show(DEPWITHNEXTYEARS) ++ "."]
