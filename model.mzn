@@ -189,53 +189,53 @@ int : sanificationTimeOut :: output_only =
 
 int : digs = ceil(log(10.0, int2float(N)));
 output 
-[
-  "K = \(K)\n" ++ 
-  "capacity = \(capacity)\n" ++
-  "N = \(N)\n" ++
-  "nStudents = \(nStudents)\n" ++
-  "year = \(year)\n" ++
-  "department = \(department)\n" ++
-  "requiredTime = \(requiredTime)\n"
-]
-++ ["\nAssignment matrix Monday (room/schedule):"]
-++ ["\n"]
-++ [show_int(digs, scheduling[room, 1, timeunit]) ++ if timeunit == TIMEUNIT_X_DAY then "\n" else " " endif | room in ROOM, timeunit in TIMEUNIT]
-++ ["\n"]
+% [
+%   "K = \(K)\n" ++ 
+%   "capacity = \(capacity)\n" ++
+%   "N = \(N)\n" ++
+%   "nStudents = \(nStudents)\n" ++
+%   "year = \(year)\n" ++
+%   "department = \(department)\n" ++
+%   "requiredTime = \(requiredTime)\n"
+% ]
+% ++ ["\nAssignment matrix Monday (room/schedule):"]
+% ++ ["\n"]
+% ++ [show_int(digs, scheduling[room, 1, timeunit]) ++ if timeunit == TIMEUNIT_X_DAY then "\n" else " " endif | room in ROOM, timeunit in TIMEUNIT]
+% ++ ["\n"]
 
-++ ["\nAssignment matrix Tuesday (room/schedule):"]
-++ ["\n"]
-++ [show_int(digs, scheduling[room, 2, timeunit]) ++ if timeunit == TIMEUNIT_X_DAY then "\n" else " " endif | room in ROOM, timeunit in TIMEUNIT]
-++ ["\n"]
+% ++ ["\nAssignment matrix Tuesday (room/schedule):"]
+% ++ ["\n"]
+% ++ [show_int(digs, scheduling[room, 2, timeunit]) ++ if timeunit == TIMEUNIT_X_DAY then "\n" else " " endif | room in ROOM, timeunit in TIMEUNIT]
+% ++ ["\n"]
 
-++ ["\nAssignment matrix Wednesday (room/schedule):"]
-++ ["\n"]
-++ [show_int(digs, scheduling[room, 3, timeunit]) ++ if timeunit == TIMEUNIT_X_DAY then "\n" else " " endif | room in ROOM, timeunit in TIMEUNIT]
-++ ["\n"]
+% ++ ["\nAssignment matrix Wednesday (room/schedule):"]
+% ++ ["\n"]
+% ++ [show_int(digs, scheduling[room, 3, timeunit]) ++ if timeunit == TIMEUNIT_X_DAY then "\n" else " " endif | room in ROOM, timeunit in TIMEUNIT]
+% ++ ["\n"]
 
-++ ["\nAssignment matrix Thursday (room/schedule):"]
-++ ["\n"]
-++ [show_int(digs, scheduling[room, 4, timeunit]) ++ if timeunit == TIMEUNIT_X_DAY then "\n" else " " endif | room in ROOM, timeunit in TIMEUNIT]
-++ ["\n"]
+% ++ ["\nAssignment matrix Thursday (room/schedule):"]
+% ++ ["\n"]
+% ++ [show_int(digs, scheduling[room, 4, timeunit]) ++ if timeunit == TIMEUNIT_X_DAY then "\n" else " " endif | room in ROOM, timeunit in TIMEUNIT]
+% ++ ["\n"]
 
-++ ["\nAssignment matrix Friday (room/schedule):"]
-++ ["\n"]
-++ [show_int(digs, scheduling[room, 5, timeunit]) ++ if timeunit == TIMEUNIT_X_DAY then "\n" else " " endif | room in ROOM, timeunit in TIMEUNIT]
-++ ["\n"]
+% ++ ["\nAssignment matrix Friday (room/schedule):"]
+% ++ ["\n"]
+% ++ [show_int(digs, scheduling[room, 5, timeunit]) ++ if timeunit == TIMEUNIT_X_DAY then "\n" else " " endif | room in ROOM, timeunit in TIMEUNIT]
+% ++ ["\n"]
 
-++ ["\nTotal time assigned:"]
-++ ["\nCoorte " ++ show(coorte) ++ " = " ++ show(timeAssignedOut[coorte]) ++ " u.t." | coorte in COORTE]
-++ ["\n"]
+% ++ ["\nTotal time assigned:"]
+% ++ ["\nCoorte " ++ show(coorte) ++ " = " ++ show(timeAssignedOut[coorte]) ++ " u.t." | coorte in COORTE]
+% ++ ["\n"]
 
-++ ["\nTotal satisfied students:"]
-++ ["\nCoorte " ++ show(coorte) ++ " = " ++ show(satisfiedStudentsOut[coorte]) ++ " people." | coorte in COORTE]
-++ ["\n"]
+% ++ ["\nTotal satisfied students:"]
+% ++ ["\nCoorte " ++ show(coorte) ++ " = " ++ show(satisfiedStudentsOut[coorte]) ++ " people." | coorte in COORTE]
+% ++ ["\n"]
 
-++ ["\nTotal sanification time: " ++ show(sanificationTimeOut) ++ "u.t."]
-++ ["\n"]
+% ++ ["\nDepartments with classes not at their first year: " ++ show(DEPWITHNEXTYEARS) ++ "."]
+% ++ ["\nCoortes not at their first year: " ++ show(COORTENEXTYEAR) ++ "."]
+% ++ ["\nPercentage of unsatisfied students: "]
+% ++ ["\nDepartment " ++ show(dep) ++ " = " ++ show_float(2,1,percentageUnsatisfiedOut[dep]*100) ++ " %." | dep in DEPWITHNEXTYEARS]
+% ++ ["\n"]
 
-++ ["\nDepartments with classes not at their first year: " ++ show(DEPWITHNEXTYEARS) ++ "."]
-++ ["\nCoortes not at their first year: " ++ show(COORTENEXTYEAR) ++ "."]
-++ ["\nPercentage of unsatisfied students: "]
-++ ["\nDepartment " ++ show(dep) ++ " = " ++ show(percentageUnsatisfiedOut[dep]) ++ " %." | dep in DEPWITHNEXTYEARS]
-++ ["\n"]
+["sanificationTime = " ++ show(sanificationTimeOut) ++ ";"]
+++ ["\npercUnsatDifference = " ++ show_float(2,1,abs(max(dep in DEPWITHNEXTYEARS)(percentageUnsatisfiedOut[dep]) - min(dep in DEPWITHNEXTYEARS)(percentageUnsatisfiedOut[dep]))*100) ++ ";"]

@@ -1,0 +1,33 @@
+minizinc: MiniZinc driver.
+Usage: minizinc  [<options>] [-I <include path>] <model>.mzn [<data>.dzn ...] or just <flat>.fzn
+More info with "minizinc --help"
+minizinc: MiniZinc driver.
+Usage: minizinc  [<options>] [-I <include path>] <model>.mzn [<data>.dzn ...] or just <flat>.fzn
+More info with "minizinc --help"
+minizinc: MiniZinc driver.
+Usage: minizinc  [<options>] [-I <include path>] <model>.mzn [<data>.dzn ...] or just <flat>.fzn
+More info with "minizinc --help"
+minizinc: MiniZinc driver.
+Usage: minizinc  [<options>] [-I <include path>] <model>.mzn [<data>.dzn ...] or just <flat>.fzn
+More info with "minizinc --help"
+minizinc: MiniZinc driver.
+Usage: minizinc  [<options>] [-I <include path>] <model>.mzn [<data>.dzn ...] or just <flat>.fzn
+More info with "minizinc --help"
+minizinc: MiniZinc driver.
+Usage: minizinc  [<options>] [-I <include path>] <model>.mzn [<data>.dzn ...] or just <flat>.fzn
+More info with "minizinc --help"
+minizinc: MiniZinc driver.
+Usage: minizinc  [<options>] [-I <include path>] <model>.mzn [<data>.dzn ...] or just <flat>.fzn
+More info with "minizinc --help"
+minizinc: MiniZinc driver.
+Usage: minizinc  [<options>] [-I <include path>] <model>.mzn [<data>.dzn ...] or just <flat>.fzn
+More info with "minizinc --help"
+minizinc: MiniZinc driver.
+Usage: minizinc  [<options>] [-I <include path>] <model>.mzn [<data>.dzn ...] or just <flat>.fzn
+More info with "minizinc --help"
+minizinc: MiniZinc driver.
+Usage: minizinc  [<options>] [-I <include path>] <model>.mzn [<data>.dzn ...] or just <flat>.fzn
+More info with "minizinc --help"
+minizinc: MiniZinc driver.
+Usage: minizinc  [<options>] [-I <include path>] <model>.mzn [<data>.dzn ...] or just <flat>.fzn
+More info with "minizinc --help"
