@@ -1,0 +1,8 @@
+K = 2
+capacity = [46, 46, 34, 49, 41, 52, 43, 59]
+N = 4
+nStudents = [861, 1044, 712, 915]
+year = [2, 2, 1, 1]
+D = 3
+department = [3, 3, 2, 1]
+requiredTime = [58, 55, 47, 41]
