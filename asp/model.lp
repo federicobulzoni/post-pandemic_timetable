@@ -19,23 +19,52 @@ occupant(0..n).
 
 % esiste uno e solo un occupant associato ad ogni R,D,T.
 1 {scheduling(R,D,T,O) : occupant(O)} 1 :- room(R), day(D), timeunit(T).
-% sanification
-sanification(R,D,T) :- scheduling(R,D,T,0), room(R), day(D), timeunit(T).
-sameGroup(R1, R2) :- R1 \ g = R2 \ g, room(R1), room(R2).
-sameDep(C1, C2) :- department(C1) = department(C2), dep(C1), dep(C2).
-timeAssigned(O, K) :- K = #count{scheduling(R,D,T,O) : room(R), day(D), timeunit(T)}, occupant(O). 
 
-satisfiedStudents(C, R, K) :- K = (X * Y) / 4, coorte(C), room(R), timeAssigned(C,X), capacity(C,Y).
+sameGroup(R1, R2) :- R1 \ g = R2 \ g,
+					 room(R1), room(R2).
+sameDep(C1, C2) :- department(C1) = department(C2), 
+				   dep(C1), dep(C2).
 
-satisfiedStudents(C, X) :- #sum{ Y,C,R : satisfiedStudents(C,R,Y),room(R)} >= X, coorte(C), nStudents(C,X).
-satisfiedStudents(C, K) :- K = #sum{ X,C,R : satisfiedStudents(C,R,X),room(R)}, K < Y, nStudents(C,Y), coorte(C).
+timeAssigned(O, K) :- K = #count{R,D,T : scheduling(R,D,T,O), room(R), day(D), timeunit(T)},
+					  occupant(O). 
 
-satisfiedStudentsDep(D, K) :- K = #sum{X,C : satisfiedStudents(C,X), coorte(C), department(C,D)}, dep(D).
+:- coorte(C), timeAssigned(C, X), requiredTime(C, Y), X < Y.
+% in un gruppo di stanze ad un certo istante temporale devono essere presenti solamente coorti dello stesso dipartimento.
+:- day(D), timeunit(T),
+   scheduling(R1, D, T, C1), scheduling(R2, D, T, C2), 
+   C1 != C2,
+   not sameDep(C1, C2), sameGroup(R1, R2),
+   room(R1), room(R2), coorte(C1), coorte(C2).
 
-totStudentsDep(D,K) :- K = #sum{X,C : nStudents(C,X), coorte(C), department(C,D)}, dep(D).
 
+lecPreviousBad(R, D, T, C) :- T != 1, not sanificationSlot(R, D, T-2), not lectureSlot(R,D,T-4,C),
+                              room(R), day(D), timeunit(T), coorte(C).
 
+lecFollowingBad(R, D, T, C) :- T + 4 <= timeunit_x_day, not sanificationSlot(R, D, T+4), not lectureSlot(R, D, T+4, C),
+                               room(R), day(D), timeunit(T), coorte(C).
 
-#show satisfiedStudents/2.
-#show satisfiedStudentsDep/2.
-#show totStudentsDep/2.
+lectureSlot(R, D, T, C) :- scheduling(R, D, T, C), scheduling(R, D, T + 1, C), scheduling(R, D, T + 2, C), scheduling(R, D, T + 3, C),
+                           not lecPreviousBad(R, D, T, C),
+                           not lecFollowingBad(R, D, T, C),
+                           room(R), day(D), timeunit(T), coorte(C).
+
+sanificationSlot(R, D, T) :- scheduling(R, D, T, 0), scheduling(R, D, T + 1, 0),
+                             lectureSlot(R, D, T - 4, C1),
+                             lectureSlot(R, D, T + 2, C2),
+                             C1 != C2,
+                             coorte(C1), coorte(C2),
+                             room(R), day(D), timeunit(T).
+
+:- room(R), day(D), not lectureSlot(R,D,1,C) : coorte(C).
+% :- scheduling(R, D, T, 0), scheduling(R, D, T + 1, C), not lessonSlot(R, D, T + 1, C), room(R), day(D), timeunit(T), coorte(C), T < timeunit_x_day.
+% :- 
+% #show satisfiedStudents/3.
+% #show satisfiedStudentsDep/2.
+% #show totStudentsDep/2.
+% #show sameDep/2.
+% #show sameGroup/2.
+#show timeAssigned/2.
+#show scheduling/4.
+#show lectureSlot/4.
+#show sanificationSlot/3.
+% #show nextCoorte/4.
