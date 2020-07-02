@@ -54,11 +54,23 @@ sanificationSlot(R, D, T) :- scheduling(R, D, T, 0), scheduling(R, D, T + 1, 0),
                              C1 != C2,
                              coorte(C1), coorte(C2),
                              room(R), day(D), timeunit(T).
-
+% vincolo di regolarità, basta questo.
 :- room(R), day(D), not lectureSlot(R,D,1,C) : coorte(C).
+
+auxSatStud(C, X) :- X = #sum{Y, R,D,T : lectureSlot(R,D,T,C), capacity(C,Y), room(R), day(D), timeunit(T)},
+                    coorte(C).
+
+satisfiedStudents(C, X) :- auxSatStud(C, X),
+                           nStudents(C, Z),
+                           X <= Z,
+                           coorte(C).
+satisfiedStudents(C, Z) :- auxSatStud(C, X),
+                           nStudents(C, Z),
+                           X > Z,
+                           coorte(C).
 % :- scheduling(R, D, T, 0), scheduling(R, D, T + 1, C), not lessonSlot(R, D, T + 1, C), room(R), day(D), timeunit(T), coorte(C), T < timeunit_x_day.
-% :- 
-% #show satisfiedStudents/3.
+% :-
+#show satisfiedStudents/2.
 % #show satisfiedStudentsDep/2.
 % #show totStudentsDep/2.
 % #show sameDep/2.
