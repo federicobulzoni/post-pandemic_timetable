@@ -68,15 +68,37 @@ satisfiedStudents(C, Z) :- auxSatStud(C, X),
                            nStudents(C, Z),
                            X > Z,
                            coorte(C).
-% :- scheduling(R, D, T, 0), scheduling(R, D, T + 1, C), not lessonSlot(R, D, T + 1, C), room(R), day(D), timeunit(T), coorte(C), T < timeunit_x_day.
-% :-
+
+
+% vincolo sulle coorti al primo anno.
+:- coorte(C), year(C,1), satisfiedStudents(C,X), nStudents(C,Y), X != Y.
+
+% preparazione alla funzione di costo.
+depWithNextYears(D) :- 1 {coorteNextYear(C) : department(C,D), coorte(C)} , dep(D).
+coorteNextYear(C) :- coorte(C), year(C,X), X > 1.
+
+satisfiedStudentsDep(D,X) :- X = #sum{Y, C : coorteNextYear(C), satisfiedStudents(C,Y), department(C,D)}, 
+                             depWithNextYears(D).
+
+totStudentsDep(D,X) :- X = #sum{Y, C : coorteNextYear(C), nStudents(C,Y), department(C,D)},
+                       depWithNextYears(D).
+
+% Target 0.
+:~ depWithNextYears(D), totStudentsDep(D, X), satisfiedStudentsDep(D, Y), Z = | X - Y | . [Z@1,D] 
+#minimize{K : timeAssigned(0,K)}.
+
+
 #show satisfiedStudents/2.
 % #show satisfiedStudentsDep/2.
 % #show totStudentsDep/2.
 % #show sameDep/2.
 % #show sameGroup/2.
-#show timeAssigned/2.
-#show scheduling/4.
+% #show timeAssigned/2.
+% #show scheduling/4.
 #show lectureSlot/4.
 #show sanificationSlot/3.
+#show depWithNextYears/1.
+#show coorteNextYear/1.
+#show satisfiedStudentsDep/2.
+#show totStudentsDep/2.
 % #show nextCoorte/4.

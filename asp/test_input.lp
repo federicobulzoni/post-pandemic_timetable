@@ -20,7 +20,7 @@ nStudents(6,450).
 year(1,1).
 year(2,2).
 year(3,3).
-year(4,2).
+year(4,1).
 year(5,3).
 year(6,2).
 
