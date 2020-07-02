@@ -84,7 +84,7 @@ totStudentsDep(D,X) :- X = #sum{Y, C : coorteNextYear(C), nStudents(C,Y), depart
                        depWithNextYears(D).
 
 % Target 0.
-:~ depWithNextYears(D), totStudentsDep(D, X), satisfiedStudentsDep(D, Y), Z = | X - Y | . [Z@1,D] 
+:~ depWithNextYears(D), totStudentsDep(D, X), satisfiedStudentsDep(D, Y), X != 0, Z = (X - Y) / X . [Z@1,D] 
 #minimize{K : timeAssigned(0,K)}.
 
 
