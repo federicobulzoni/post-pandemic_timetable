@@ -18,7 +18,7 @@ day(1..n_days).
 occupant(0..n).
 
 % Specifiche per limitare i domini.
-#const min_cap = 40.
+#const min_cap = 30.
 #const max_cap = 60.
 cap(min_cap .. max_cap).
 
@@ -43,10 +43,8 @@ sameGroup(R1, R2) :- R1 \ g = R2 \ g,
 sameDep(C1, C2) :- department(C1) = department(C2), 
 				   dep(C1), dep(C2).
 
-timeAssigned(O, K) :- K = #count{R,D,T : scheduling(R,D,T,O), room(R), day(D), timeunit(T)},
-					  occupant(O). 
+sanificationTime(K) :- K = #count{R,D,T : scheduling(R,D,T,0), room(R), day(D), timeunit(T)}.
 
-:- coorte(C), timeAssigned(C, X), tAss(X), requiredTime(C, Y), reqT(Y), X < Y.
 % in un gruppo di stanze ad un certo istante temporale devono essere presenti solamente coorti dello stesso dipartimento.
 :- day(D), timeunit(T),
    scheduling(R1, D, T, C1), scheduling(R2, D, T, C2), 
@@ -76,46 +74,36 @@ sanificationSlot(R, D, T) :- scheduling(R, D, T, 0), scheduling(R, D, T + 1, 0),
 :- room(R), day(D), not lectureSlot(R,D,1,C) : coorte(C).
 
 % vincolo sulle coorti al primo anno.
-:- coorte(C), year(C,1), nStudents(C,Y), #sum{Z, R,D,T : lectureSlot(R,D,T,C), capacity(R,Z), cap(Z), room(R), day(D), timeunit(T)} < Y.
+:- coorte(C), year(C,1), nStudents(C,Y),
+   #sum{Z, R,D,T : lectureSlot(R,D,T,C), capacity(R,Z), cap(Z), room(R), day(D), timeunit(T)} < Y.
 
+% :~ coorte(C), year(C,1), requiredTime(C, Y), reqT(Y),
+%    X = #count{R,D,T : scheduling(R,D,T,C), room(R), day(D), timeunit(T)}. [X, C]
 
-% % preparazione alla funzione di costo.
+% preparazione alla funzione di costo.
 depWithNextYears(D) :- 1 {coorteNextYear(C) : department(C,D), coorte(C)} , dep(D).
 coorteNextYear(C) :- coorte(C), year(C,X), y(X), X > 1.
 
-% satisfiedStudentsDep(D,X) :- X = #sum{Y, C,R,D,T : coorteNextYear(C), satisfiedStudents(C,Y), department(C,D)}, 
-%                              depWithNextYears(D).
+totRequiredTimeDep(DI, X) :- X = #sum{Y, C : coorteNextYear(C), department(C, DI), requiredTime(C, Y), reqT(Y)},
+                          depWithNextYears(DI).
 
-totStudentsDep(D,X) :- X = #sum{Y, C : coorteNextYear(C), nStudents(C,Y), stud(Y), department(C,D)},
-                       depWithNextYears(D).
+timeAssignedDep(DI, X) :- X = #count{C, R,D,T : coorteNextYear(C), department(C,DI), scheduling(R,D,T,C), room(R), day(D), timeunit(T)},
+                      depWithNextYears(DI). 
 
-% satisfiedStudentsDep(DI, X) :- 
-%   X = #sum{Z, C,R,DA,T : coorteNextYear(C), department(C,DI), room(R), day(DA), timeunit(T), lectureSlot(R,DA,T,C), capacity(R,Z), cap(Z)},
-%   depWithNextYears(DI). 
+%timeAssignedFirstYears(X) :- X = #count{C, R,D,T : coorte(C), year(C,1), scheduling(R,D,T,C), room(R), day(D), timeunit(T)}.
 
-% % Target 0. 
-% :~ depWithNextYears(DI), 
-%    totStudentsDep(DI, X),
-%    #sum{Z, C,R,DA,T : coorteNextYear(C), department(C,DI), room(R), day(DA), timeunit(T),
-%         lectureSlot(R,DA,T,C), capacity(R,Z), cap(Z)} <= X,
-
-%    Y = #sum{Z, C,R,DA,T : coorteNextYear(C), department(C,DI), room(R), day(DA), timeunit(T),
-%         lectureSlot(R,DA,T,C), capacity(R,Z), cap(Z)},
-%    X != 0, RES = (X - Y) / X . [RES@1,DI] 
-#minimize{K : timeAssigned(0,K)}.
+:- depWithNextYears(DI1), depWithNextYears(DI2), DI1 != DI2,
+   totRequiredTimeDep(DI1, X1), totRequiredTimeDep(DI2, X2),
+   timeAssignedDep(DI1, Y1), timeAssignedDep(DI2, Y2),
+   | (Y1*100 / X1) - (Y2*100 / X2) | > 10.
 
 
-#show satisfiedStudentsDep/2.
-% #show satisfiedStudentsDep/2.
-% #show totStudentsDep/2.
-% #show sameDep/2.
-% #show sameGroup/2.
-% #show timeAssigned/2.
-% #show scheduling/4.
+#minimize{K : sanificationTime(K)}.
+%#minimize{X : timeAssignedFirstYears(X)}.
+
+%% OUTPUT :
+#show totRequiredTimeDep/2.
+#show timeAssignedDep/2.
+
 #show lectureSlot/4.
 #show sanificationSlot/3.
-#show depWithNextYears/1.
-#show coorteNextYear/1.
-#show satisfiedStudentsDep/2.
-#show totStudentsDep/2.
-% #show nextCoorte/4.
