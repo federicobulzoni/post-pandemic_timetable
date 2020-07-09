@@ -28,6 +28,16 @@ set of int : OCCUPANT = 0 .. N; % 0 is the sanification.
 % A table where for each room, day and timeunit it associates the occupant of the room in that day and timeunit. The room can be occuped by a coorte or by a sanification.
 array[ROOM, DAY, TIMEUNIT] of var OCCUPANT : scheduling;
 
+% Initialization.
+constraint
+  forall(room in ROOM)(
+    room in DEPARTMENT
+    ->
+    exists(coorte in COORTE)(
+      department[coorte] = room
+      /\ scheduling[room, 1, 1] = coorte
+    )
+  );
 
 % Utilities:
 predicate sanification(var OCCUPANT : occupant) =
@@ -41,27 +51,10 @@ predicate sameDep(var COORTE : coorte1, var COORTE : coorte2) =
   
 function var int : timeAssigned(OCCUPANT : occupant) = 
    count([scheduling[room, day, timeunit] | room in ROOM, day in DAY, timeunit in TIMEUNIT], occupant);
-   
-function var int : satisfiedStudents(COORTE : coorte) = 
-  let {var int : x = sum(room in ROOM)( (count([scheduling[room, day, timeunit] | day in DAY, timeunit in TIMEUNIT], coorte) div 4) * capacity[room] ) } 
-  in 
-  if x > nStudents[coorte]
-    then nStudents[coorte]
-    else x
-  endif;
-  
-function var int : satisfiedStudentsDep(DEPARTMENT : dep) = 
-  sum(coorte in COORTENEXTYEAR where department[coorte] = dep)(
-    satisfiedStudents(coorte)
-  );
-  
-function int : totStudentsDep(DEPARTMENT : dep) = 
-  sum(coorte in COORTENEXTYEAR where department[coorte] = dep)(
-    nStudents[coorte]
-  );
 
-function var float : percentageUnsatisfiedDep(DEPARTMENT : dep) = 
-  1.0 - (satisfiedStudentsDep(dep) / totStudentsDep(dep));
+      
+function var int : satisfiedStudents(COORTE : coorte) = 
+  sum(room in ROOM)( (count([scheduling[room, day, timeunit] | day in DAY, timeunit in TIMEUNIT], coorte) div 4) * capacity[room] );
   
 % Constraints:
 % Automata declaration.
@@ -134,16 +127,11 @@ constraint
     )
   );
 
-% The time assigned to a coorte must be at least the time required by the considered coorte.
-constraint
-  forall(coorte in COORTE)(
-    timeAssigned(coorte) >= requiredTime[coorte]
-  );
 
 % All the students at their first year must have a lecture.                  
 constraint
   forall(coorte in COORTE)(
-    year[coorte] = 1 -> satisfiedStudents(coorte) = nStudents[coorte]
+    year[coorte] = 1 -> satisfiedStudents(coorte) >= nStudents[coorte]
   );
 
 % SEARCH
@@ -152,10 +140,46 @@ constraint
 % Restriction to the coortes at the second and third year, and to the departments with at least one of these coortes.
 set of DEPARTMENT : DEPWITHNEXTYEARS = {dep | dep in DEPARTMENT where exists(coorte in COORTE)(department[coorte] = dep /\ year[coorte] != 1)};
 
-set of COORTE : COORTENEXTYEAR = {coorte | coorte in COORTE, dep in DEPWITHNEXTYEARS where year[coorte] != 1 /\ department[coorte] = dep};
+set of COORTE : COORTENEXTYEAR = {coorte | coorte in COORTE where year[coorte] > 1};
 
+function int : totRequiredTimeDep(DEPWITHNEXTYEARS : dep) =
+  sum(coorte in COORTENEXTYEAR where department[coorte] = dep)(
+    requiredTime[coorte]
+  );
+
+function var int : timeAssignedDep(DEPWITHNEXTYEARS: dep) = 
+  sum(coorte in COORTENEXTYEAR where department[coorte] = dep)(
+    timeAssigned(coorte)
+  );
+  
+function var float : percSatDep(DEPWITHNEXTYEARS : dep) =
+  timeAssignedDep(dep) * 100 / totRequiredTimeDep(dep);
+  
+constraint
+  forall(dep1, dep2 in DEPWITHNEXTYEARS where dep1 != dep2 /\ timeAssignedDep(dep1) < requiredTime[dep1] /\ timeAssigned(dep2) < requiredTime[dep2])(
+    abs(percSatDep(dep1) - percSatDep(dep2)) < 10
+  );
+  
 % Objective function.
-solve :: int_search(scheduling, dom_w_deg, indomain_random)  minimize (timeAssigned(0) / (TIMEUNIT_X_DAY * N_DAYS)) + (max(dep in DEPWITHNEXTYEARS)(percentageUnsatisfiedDep(dep)) - min(dep in DEPWITHNEXTYEARS)(percentageUnsatisfiedDep(dep)));
+% Priorità 1: tempo di sanificazione (timeAssigned(0)).
+% Priorità 2: percentuale insoddisfazione.
+% Priorità 3: numero di coorti insoddisfatte.
+
+
+function var float : sanificationTime() = 
+  timeAssigned(0);
+  
+function var int : nCoortiUnsat() =
+  length([coorte | coorte in COORTE where timeAssigned(coorte) < requiredTime[coorte]]);
+
+function var float : percUnsat(COORTE : coorte) = 
+  if timeAssigned(coorte) >= requiredTime[coorte]
+    then 0
+    else (requiredTime[coorte] - timeAssigned(coorte)) / requiredTime[coorte]
+  endif;
+    
+    
+solve :: int_search(scheduling, dom_w_deg, indomain_random)  minimize (timeAssigned(0)/(TIMEUNIT_X_DAY * N_DAYS * G * K) + 10*nCoortiUnsat()/N) + 5*max([percUnsat(coorte) | coorte in COORTE]);
 
 % Output
 array [COORTE] of int : timeAssignedOut :: output_only = 
@@ -168,24 +192,21 @@ array [COORTE] of int : satisfiedStudentsOut :: output_only =
     then nStudents[coorte]
     else x
   endif | coorte in COORTE];
-
-  
-array [DEPARTMENT] of float : percentageUnsatisfiedOut :: output_only = 
-  [
-  let {
-  int : totStudDep = sum(coorte in COORTENEXTYEAR where department[coorte] = dep)(
-    nStudents[coorte]
-  );
-  int : totSatStudDep = sum(coorte in COORTENEXTYEAR where department[coorte] = dep)(
-    satisfiedStudentsOut[coorte]
-  );
-  float : perc = if totStudDep > 0 then 1.0 - totSatStudDep / totStudDep else 0.0 endif;
-  } in
-  perc | dep in DEPARTMENT];
       
       
 int : sanificationTimeOut :: output_only =
   count([fix(scheduling[room, day, timeunit]) | room in ROOM, day in DAY, timeunit in TIMEUNIT], 0);
+
+int : nCoortiUnsatOut :: output_only = 
+  length([coorte | coorte in COORTE where timeAssignedOut[coorte] < requiredTime[coorte]]);
+  
+array [COORTE] of float : percUnsatOut :: output_only =
+[
+  if timeAssignedOut[coorte] >= requiredTime[coorte]
+    then 0
+    else (requiredTime[coorte] - timeAssignedOut[coorte]) / requiredTime[coorte]
+  endif
+| coorte in COORTE];
 
 int : digs = ceil(log(10.0, int2float(N)));
 output 
@@ -227,15 +248,20 @@ output
 ++ ["\nCoorte " ++ show(coorte) ++ " = " ++ show(timeAssignedOut[coorte]) ++ " u.t." | coorte in COORTE]
 ++ ["\n"]
 
+++ ["\nNumber of coorti unsatisfied = " ++ show(nCoortiUnsatOut) ++ "."]
+++ ["\n"]
+
+++ ["Unsatisfied percentage:"]
+++ ["\nCoorte " ++ show(coorte) ++ " = " ++ show_float(3,0,100*percUnsatOut[coorte]) ++ "%" | coorte in COORTE]
+++ ["\n"]
+
 ++ ["\nTotal satisfied students:"]
 ++ ["\nCoorte " ++ show(coorte) ++ " = " ++ show(satisfiedStudentsOut[coorte]) ++ " people." | coorte in COORTE]
 ++ ["\n"]
 
+
 ++ ["\nDepartments with classes not at their first year: " ++ show(DEPWITHNEXTYEARS) ++ "."]
 ++ ["\nCoortes not at their first year: " ++ show(COORTENEXTYEAR) ++ "."]
-++ ["\nPercentage of unsatisfied students: "]
-++ ["\nDepartment " ++ show(dep) ++ " = " ++ show_float(2,1,percentageUnsatisfiedOut[dep]*100) ++ " %." | dep in DEPWITHNEXTYEARS]
 ++ ["\n"] ++
 
 ["sanificationTime = " ++ show(sanificationTimeOut) ++ ";"]
-++ ["\npercUnsatDifference = " ++ show_float(2,1,abs(max(dep in DEPWITHNEXTYEARS)(percentageUnsatisfiedOut[dep]) - min(dep in DEPWITHNEXTYEARS)(percentageUnsatisfiedOut[dep]))*100) ++ ";"]
