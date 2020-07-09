@@ -92,13 +92,15 @@ timeAssigned(C, X) :- X = #count{R,D,T : scheduling(R,D,T,C), room(R), day(D), t
 
 unsatisfied(C) :- coorte(C), requiredTime(C,Y), reqT(Y), #count{R,D,T : scheduling(R,D,T,C), room(R), day(D), timeunit(T)} < Y.
 
-:~ Z = #count{C : coorte(C), timeAssigned(C,X), tAss(X), requiredTime(C,Y), reqT(Y), X < Y}. [Z@3]
+%:~ Z = #count{C : coorte(C), timeAssigned(C,X), tAss(X), requiredTime(C,Y), reqT(Y), X < Y}. [Z@3]
+:~ Z = #count{C : coorte(C), unsatisfied(C)}. [Z@3]
 :~ coorte(C), timeAssigned(C,X), tAss(X), requiredTime(C,Y), reqT(Y),
    X < Y,
    RES = (Y-X)*100/Y. [RES@2]
 
 % preparazione alla funzione di costo.
 depWithNextYears(D) :- 1 {coorteNextYear(C) : department(C,D)} , dep(D).
+%coorteNextYear(C) :- coorte(C), year(C,X), y(X), X > 1.
 coorteNextYear(C) :- coorte(C), year(C,X), y(X), X > 1.
 
 totRequiredTimeDep(DI, Z) :- Z = #sum{Y, C : coorteNextYear(C), requiredTime(C,Y), reqT(Y), department(C, DI)},
@@ -110,8 +112,7 @@ timeAssignedDep(DI, Z) :- Z = #count{C, R,D,T : coorteNextYear(C), department(C,
 :- depWithNextYears(DI1), depWithNextYears(DI2), DI1 != DI2,
    totRequiredTimeDep(DI1, X1), totRequiredTimeDep(DI2, X2),
    timeAssignedDep(DI1, Y1), timeAssignedDep(DI2, Y2),
-   Y1 < X1, Y2 < X2,
-   %X1 != 0, X2 != 0,
+   Y1 < X1, Y2 < X2, 
    | (Y1*100 / X1) - (Y2*100 / X2) | > 10.
 
 

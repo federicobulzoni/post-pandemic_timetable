@@ -139,7 +139,6 @@ constraint
 
 % Restriction to the coortes at the second and third year, and to the departments with at least one of these coortes.
 set of DEPARTMENT : DEPWITHNEXTYEARS = {dep | dep in DEPARTMENT where exists(coorte in COORTE)(department[coorte] = dep /\ year[coorte] != 1)};
-
 set of COORTE : COORTENEXTYEAR = {coorte | coorte in COORTE where year[coorte] > 1};
 
 function int : totRequiredTimeDep(DEPWITHNEXTYEARS : dep) =
@@ -178,7 +177,6 @@ function var float : percUnsat(COORTE : coorte) =
     else (requiredTime[coorte] - timeAssigned(coorte)) / requiredTime[coorte]
   endif;
     
-    
 solve :: int_search(scheduling, dom_w_deg, indomain_random)  minimize (timeAssigned(0)/(TIMEUNIT_X_DAY * N_DAYS * G * K) + 10*nCoortiUnsat()/N) + 5*max([percUnsat(coorte) | coorte in COORTE]);
 
 % Output
@@ -207,7 +205,7 @@ array [COORTE] of float : percUnsatOut :: output_only =
     else (requiredTime[coorte] - timeAssignedOut[coorte]) / requiredTime[coorte]
   endif
 | coorte in COORTE];
-
+  
 int : digs = ceil(log(10.0, int2float(N)));
 output 
 [
@@ -259,9 +257,8 @@ output
 ++ ["\nCoorte " ++ show(coorte) ++ " = " ++ show(satisfiedStudentsOut[coorte]) ++ " people." | coorte in COORTE]
 ++ ["\n"]
 
-
 ++ ["\nDepartments with classes not at their first year: " ++ show(DEPWITHNEXTYEARS) ++ "."]
 ++ ["\nCoortes not at their first year: " ++ show(COORTENEXTYEAR) ++ "."]
-++ ["\n"] ++
+++ ["\n"]
 
-["sanificationTime = " ++ show(sanificationTimeOut) ++ ";"]
+++ ["sanificationTime = " ++ show(sanificationTimeOut) ++ " u.t."]
