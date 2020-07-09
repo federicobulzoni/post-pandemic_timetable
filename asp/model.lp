@@ -100,7 +100,6 @@ unsatisfied(C) :- coorte(C), requiredTime(C,Y), reqT(Y), #count{R,D,T : scheduli
 
 % preparazione alla funzione di costo.
 depWithNextYears(D) :- 1 {coorteNextYear(C) : department(C,D)} , dep(D).
-%coorteNextYear(C) :- coorte(C), year(C,X), y(X), X > 1.
 coorteNextYear(C) :- coorte(C), year(C,X), y(X), X > 1.
 
 totRequiredTimeDep(DI, Z) :- Z = #sum{Y, C : coorteNextYear(C), requiredTime(C,Y), reqT(Y), department(C, DI)},
