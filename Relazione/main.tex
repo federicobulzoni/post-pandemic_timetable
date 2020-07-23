@@ -1,0 +1,287 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Template for lab reports used at BIT modified from STIMA
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Sets the document class for the document
+% Openany is added to remove the book style of starting every new chapter on an odd page (not needed for reports)
+\documentclass[12pt,english, openany]{book}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Loading packages that alter the style
+\usepackage[]{graphicx}
+\usepackage[]{color}
+\usepackage{alltt}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{mathptmx}
+
+\setcounter{secnumdepth}{3}
+\setcounter{tocdepth}{3}
+\setlength{\parskip}{\smallskipamount}
+\setlength{\parindent}{12pt}
+
+% Set page margins
+\usepackage[top=60pt,bottom=60pt,left=78pt,right=78pt]{geometry}
+\usepackage{subcaption}
+% Package used for placeholder text
+\usepackage{lipsum}
+\usepackage{booktabs}
+\usepackage{multirow}
+% Prevents LaTeX from filling out a page to the bottom
+\raggedbottom
+
+% Adding both languages
+\usepackage[english]{babel}
+
+% All page numbers positioned at the bottom of the page
+\usepackage{fancyhdr}
+\fancyhf{} % clear all header and footers
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0pt} % remove the header rule
+\pagestyle{fancy}
+
+% Changes the style of chapter headings
+\usepackage{titlesec}
+\titleformat{\chapter}
+   {\normalfont\LARGE\bfseries}{\thechapter.}{1em}{}
+% Change distance between chapter header and text
+\titlespacing{\chapter}{0pt}{40pt}{2\baselineskip}
+
+% Adds table captions above the table per default
+\usepackage{float}
+\floatstyle{plaintop}
+\restylefloat{table}
+
+% Adds space between caption and table
+\usepackage[tableposition=top]{caption}
+
+% add cc license
+\usepackage[
+type={CC},
+modifier={by-nc-sa},
+version={4.0},
+]{doclicense}
+
+% Adds hyperlinks to references and ToC
+\usepackage{hyperref}
+% Uncomment the line below this block to set all hyperlink color to black
+\hypersetup{
+	colorlinks,
+	linkcolor={blue},
+	citecolor={green!90!black},
+	urlcolor={red!70!black}
+}
+%\hypersetup{hidelinks,linkcolor = black} % Changes the link color to black and hides the hideous red border that usually is created
+
+% Set specific color for hyperref
+\usepackage{xcolor}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+
+
+
+
+
+% tcolorbox; Notice! add "-shell-escape" to the compile command
+\usepackage{tcolorbox}
+
+% If multiple images are to be added, a folder (path) with all the images can be added here 
+\graphicspath{ {Figures/} }
+
+% Separates the first part of the report/thesis in Roman numerals
+\frontmatter
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Starts the document
+\begin{document}
+
+%%% Selects the language to be used for the first couple of pages
+\selectlanguage{english}
+
+%%%%% Adds the title page
+\begin{titlepage}
+	\clearpage\thispagestyle{empty}
+	\centering
+	\vspace{1cm}
+
+	% Titles
+	% Information about the University
+	{\
+		\textsc{Ragionamento Automatico}
+	}
+		\vspace{2.5cm}
+		
+	\rule{\linewidth}{2mm} \\[0.5cm]
+	{ \Huge \bfseries Due modelli per la generazione automatica\\[0.2em]
+		degli orari di una università\\[0.2em]
+		durante una pandemia/epidemia}\\[0.5cm]
+	\rule{\linewidth}{0.6mm} \\[3.4cm]
+
+	\hspace{2cm}
+		\begin{tabular}{l p{5cm}}
+		\textbf{Name} & Federico Bulzoni \\[10pt]
+		\textbf{Student No.} & 142242 \\[10pt]
+		\textbf{Department} & Informatica \\[10pt]
+		\textbf{Email} & \texttt{bulzoni.federico@spes.uniud.it} \\[10pt]
+		\textbf{Date} &  27/07/2020\\            
+		\end{tabular}
+   
+    
+    \vfill
+    % Light logo and Dark logo
+    \centering \includegraphics[height=3.5cm]{logo_uniud}\\ % light logo
+	%\centering \includegraphics[height=4cm]{logo_01}\\ % dark logo
+    \vspace{0.5cm}
+
+		
+	
+	
+	\pagebreak
+
+\end{titlepage}
+
+% Adds a table of contents keep the link black
+%{\hypersetup{linkcolor=black}
+%	% or \hypersetup{linkcolor=black}, if the colorlinks=true option of hyperref is used
+%	\tableofcontents{}
+%}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%% Text body starts here!
+\mainmatter
+
+% Comment the following two lines to remove abstract 
+%\chapter*{\makebox[\linewidth]{Abstract}}
+%\addcontentsline{toc}{chapter}{Abstract}
+%Il problema di trovare un buon orario settimanale per i corsi all'interno di una università è un problema ben noto nell'informatica teorica. Nella sua formulazione classica il problema dato un insieme di aule, un insieme di corsi, un insieme di professori ed una finestra temporale, richiede di trovare un assegnamento dei corsi e dei professori alle aule nella finestra temporale a disposizione che soddisfi una serie di requisiti. Un requisito può essere \textit{forte}, nel senso che obbligatoriamente deve essere soddisfatti, un esempio può essere il fatto che ogni corso richiede un certo numero di ore settimanali di lezione che necessariamente deve svolgere; mentre altri possono essere \textit{deboli}, nel senso che è preferibile che vengano soddisfatti; ad 
+%
+%\vspace{0.5cm}
+%\noindent\textbf{Keywords}: 
+%\LaTeX, BIT
+
+\chapter{Introduzione}
+Il problema del \textit{timetabling} per una università, ossia di determinare un orario per le lezioni settimanali all'interno di un'università è un problema classico nell'informatica teorica, e approcci che rendono automatica la generazione di un tale orario vengono esplorati sin dagli anni sessanta dello scorso secolo (Gotlieb, 1963). Nella sua formulazione più comune il problema richiede dati un certo numero di aule, un certo numero di professori, un certo numero di classi ed una finestra temporale, di trovare un assegnamento per la finestra temporale considerata delle classi e dei professori nelle aule che soddisfi un insieme di vincoli. I vincoli possono essere suddivisi in \textit{vincoli forti} e \textit{vincoli deboli}.
+Considerato un possibile orario settimanale, un vincolo forte è tale per cui l'orario considerato è una soluzione valida al problema se e solo se è tale per cui tale vincolo viene soddisfatto; un esempio di vincolo forte è il fatto che non è possibile che una stessa classe svolga contemporaneamente lezione in due aule diverse.
+Dall'altra parte un vincolo debole è tale per cui l'orario considerato è valido anche se non soddisfa il vincolo debole, tuttavia dati due orari settimanali validi di cui uno soddisfa il vincolo debole e l'altro no, viene giudicato come \textit{soluzione migliore} tra le due l'orario che soddisfa il vincolo debole; un esempio di vincolo debole può essere che considerando una classe, il numero di ore di lezione che svolge durante i diversi giorni della settimana dovrebbe essere equilibrato.
+
+In questo report andremo ad analizzare una versione modificata di tale problema, nella quale si prendono in considerazione nella generazione degli orari le necessità comportate dalla convivenza con una pandemia in corso, quali ad esempio la necessità di sanificare un aula prima di ogni cambio di classe. Per tale problema vengono proposte due soluzioni distinte, una nella quale il problema viene codificato in \texttt{MiniZinc} (Reference needed) e un altra nella quale il problema viene codificato in \texttt{ASP} (Reference needed). Le soluzioni proposte oltre a differenziarsi per il linguaggio utilizzato, si differenziano anche per l'approccio seguito, nella codifica \textit{MiniZinc} viene fatto uso di un automa deterministico a stati finiti (\textbf{DFA}) per risolvere buona parte dei vincoli forti emersi nella modellazione del problema, mentre nella codifica \textit{ASP} tali vincoli vengono modellati con un approccio puramente dichiarativo.
+
+\chapter{Specifica del problema}
+Si richiede di organizzare l'orario per una università di piccole dimensioni tenendo conto delle misure di contenimento in atto per una pandemia.
+
+\section{Dati in input}
+Le \textbf{aule} a disposizione sono suddivise in $G = 4$ \textbf{gruppi} distinti, questa assunzione deriva dal fatto che le aule si trovano tutte su di un corridoio con al centro delle scale, abbiamo quindi una suddivisione delle aule in base al lato del corridoio ed in base al lato in cui si trovano rispetto alle scale. Ogni gruppo, è formato dallo stesso numero di aule $K \in \mathbb{N}$, pertanto il numero totale di aule a disposizione è $G*K$.
+Ad ogni aula $r \in \left[ 1,  G*K \right]$ è associata una \textbf{capacità} $cap \in \left[ 30,  60 \right]$ che indica il numero di studenti che l'aula può contenere.
+Vi sono $N \in \mathbb{N}$ \textbf{coorti} di studenti da allocare. Ad ogni coorte $c \in \left[1, N \right]$ è associato il \textbf{numero di studenti} che vi sono immatricolati $nStud \in \left[50, 300 \right]$, e l'\textbf{anno} di carriera $y \in \left[1, 3 \right]$ corrispondente, vengono considerate solamente lauree triennali.\\
+Le coorti sono suddivise in \textbf{dipartimenti}, sia $D \in \mathbb{N}$ il numero di dipartimenti distinti all'interno dell'università. Ad ogni coorte $c \in \left[1, N \right]$ è associato il dipartimento $dep \in \left[1, D \right]$ a cui appartiene.
+Infine, ad ogni coorte $c \in \left[1, N \right]$ è associato il numero di ore a settimana $reqT \in \left[40, 60\right]$ che richiede.
+
+\section{Requisiti}
+Sapendo che l'orario di apertura dell'università è dalle 8:00 alle 19:00 e lavorando con una granularità di 30 minuti, si richiede di organizzare l'orario delle lezioni rispettando i seguenti vincoli forti:
+\begin{itemize}
+\item Gli slot delle lezioni sono di $2$ ore,
+\item ogni volta che una coorte lascia un aula c'è bisogno di una sanificazione,
+\item gli slot delle sanificazioni sono di $1$ ora,
+\item per ogni istante temporale, in un gruppo di aule possono essere allocate unicamente coorti dello stesso dipartimento e sanificazioni,
+\item tutti gli studenti delle coorti al primo anno devono avere almeno una lezione in presenza a settimana,
+\item la percentuale di ore che non vengono allocate alle coorti degli anni successivi al primo rispetto a quelle richieste deve essere ben bilanciata tra i dipartimenti, in particolare si assume che le percentuali tra i diversi dipartimenti siano bilanciate con uno scarto del $10 \% $.
+\end{itemize}
+Si richiede di \textbf{minimizzare la non occupazione delle aule}.
+
+\section{Assunzioni}
+Si assume che i giorni di apertura siano $5$: dal Lunedì al Venerdì e che alla fine di ogni giornata, immediatamente dopo la chiusura dell'università ci sia una sanificazione generale di tutte le aule; questa assunzione implica che in un orario ottimale non ha senso avere una sanificazione all'orario di apertura (8:00) o all'orario di chiusura (19:00).
+Riguardo alla richiesta di minimizzare la non occupazione delle aule, si assume che non ci siano mai istanti temporali in cui un aula è vuota, al massimo può ritenersi "non occupata" quando al suo interno viene svolta una sanificazione, pertanto tale richiesta si traduce in \textit{"minimizzare il numero di sanificazioni settimanali"}.
+Si assume che non porti alcun vantaggio effettuare una sanificazione in una data aula se tra l'istante prima della sanificazione e quello successivo non c'è un cambio di coorte all'interno dell'aula, pertanto questa eventualità viene impedita.
+
+\section{Funzione di costo}
+Oltre a minimizzare il numero di sanificazioni settimanali, si è scelto di dare peso anche al \textit{numero di coorti che non riescono ad avere assegnate il numero di ore settimanali richieste} e alla \textit{percentuale di ore mancanti rispetto alle ore settimanali richieste}.\\
+Sia $K$ il numero di sanificazioni settimanali, $Z$ il numero di coorti che non riescono ad avere assegnate il numero di ore richieste, e $\left[P_1, \dots, P_N \right]$ la lista di percentuali di ore mancanti rispetto a quelle richieste per ogni coorte $i \in \left[1, N \right]$.\\
+La funzione di costo considerata è funzione di $K$, $Z$ e $\left[P_1, \dots, P_N \right]$, in particolare si assumono le seguenti priorità: $3@Z$, $2@\left[P_1, \dots, P_N \right]$ e $1@K$ dove con il numero intero alla sinistra della $@$ indichiamo la priorità associata al valore alla destra della $@$.
+Questa scelta viene giustificata, da una maggiore attenzione che si è voluta porre sul rendere l'orario più equo possibile per tutti a discapito di un possibile maggior numero di sanificazioni.
+
+\chapter{Scelte comuni alle due soluzioni}
+Considerando che l'orario di apertura dell'università è dalle 8:00 alle 19:00 e che lavoriamo con una granularità di 30 minuti, la giornata universitaria è stata suddivisa in $22$ unità di tempo, dove ogni unità di tempo corrisponde a 30 minuti reali.
+La soluzione al problema consiste in un \textbf{assegnamento} che ad ogni aula, ad ogni giorno considerato e ad ogni istante di tempo considerato associa un \textbf{occupante}, dove un occupante può essere una \textbf{coorte} o una \textbf{sanificazione}. Tale assegnamento viene chiamato \texttt{scheduling} in entrambe le soluzioni, il predicato $scheduling(r,d,t,o)$ se vero, indica che nell'aula $r \in \left[1, G*K \right]$, al giorno $d \in \left[1, 5 \right]$, all'istante $t \in \left[ 1, 22 \right]$ è presente l'occupante $o \in \lbrace 0 \rbrace \cup \left[1, N \right]$.
+La sanificazione viene identificata con il numero intero $0$, mentre la coorte $i \in \left[1, N \right]$ è identificata con l'intero $i$.
+Data un aula $r \in \left[1, G*K \right]$, il gruppo $g \in \left[0, G-1\right]$ a cui appartiene è tale per cui $r \% G = g$, dove con $\%$ in questo caso indichiamo l'operazione modulo.
+Riguardo al vincolo sulle coorti al primo anno, per cui si richiede che tutti gli studenti abbiano almeno una lezione in presenza a settimana, data una coorte $i \in \left[1, N\right]$ il numero di studenti che ha almeno una lezione in presenza a settimana è stato modellato come la somma delle capacità delle aule $r \in \left[1, G*K\right]$ in cui la coorte $i$ svolge lezione, chiaramente se la coorte $i$ viene assegnata più volte all'aula $r$, la capacità di $r$ verrà considerata più volte nel calcolo.\\
+Nei piani iniziali, l'idea era quella di introdurre come ulteriore vincolo debole il fatto che il maggior numero possibile di studenti per ogni coorte vada a lezione in presenza, tuttavia il calcolo del numero di studenti con lezioni in presenza per ogni coorte è estremamente dispendioso, soprattutto nella codifica ASP in cui assegnare il risultato di un'operazione aggregata ad un predicato, per poi effettuarci confronti sopra fa esplodere la complessità; per questi motivi l'idea è stata abbandonata in entrambe le codifiche.\\
+Il tempo assegnato ad una coorte, così come quello assegnato alle operazioni di sanificazione, non è altro che il conteggio delle volte in cui la coorte (o sanificazione) viene assegnata ad una tripla $(r, d, t) \in \left[1, G*K \right] \times \left[1, 5 \right] \times \left[1, 22\right]$, dove $r$ è un'aula, $d$ è un giorno della settimana e $t$ è un istante temporale.\\
+Il vincolo:
+\begin{tcolorbox}[title=\textbf{Vincolo aule-dipartimenti}]
+Per ogni istante temporale, in un gruppo di aule possono essere allocate unicamente coorti dello stesso dipartimento e sanificazioni.
+\end{tcolorbox}
+È stato modellato in entrambe le soluzioni tramite il predicato al primo ordine:
+
+\begin{equation}
+\begin{split}
+\forall r  \forall dep  \forall t (&scheduling(r,d,t,c) \wedge department(c,dep)  \rightarrow \\
+                                          &\neg \exists r' (r' \neq r \wedge scheduling(r',d,t,c') \wedge r \% G = r' \% G \wedge department(c',dep')  \wedge dep' \neq dep))
+\end{split}
+\end{equation}
+dove $r,r' \in \left[1, G*K\right]$, $d \in \left[1, 5 \right]$, $t \in \left[1, 22 \right]$, $c,c' \in \left[1, N \right]$, $dep, dep' \in \left[1, D \right]$.\\
+Il vincolo:
+\begin{tcolorbox}[title=\textbf{Vincolo coorti al primo anno - studenti}]
+Tutti gli studenti delle coorti al primo anno devono avere almeno una lezione in presenza a settimana.
+\end{tcolorbox}
+È stato modellato in entrambe le soluzioni tramite il predicato al primo ordine:
+
+\begin{equation}
+\forall c (year(c,1) \wedge satisfiedStudents(c, x) \wedge nStudents(c, y) \rightarrow x \geq y)
+\end{equation}
+dove $c \in \left[1, N\right]$, $year(c,1)$ se e solo se la coorte $c$ è al primo anno, $satisfiedStudents(c,x)$ è vero se e solo se il numero di studenti che hanno lezione in presenza della coorte $c$ è uguale ad $x$ ed $x$ viene calcolato come specificato in precedenza, e $nStudents(c,y)$ è vero se e solo se il numero di studenti della coorte $c$ è pari ad $y$.\\
+
+Il vincolo:
+\begin{tcolorbox}[title=\textbf{Vincolo bilanciamento insoddisfazione dipartimenti}]
+La percentuale di ore che non vengono allocate alle coorti degli anni successivi al primo rispetto a quelle richieste deve essere ben bilanciata tra i dipartimenti, in particolare si assume che le percentuali tra i diversi dipartimenti siano bilanciate con uno scarto del $10 \% $.
+\end{tcolorbox}
+è quello che ha creato più problemi nella fase di modellazione e anche di implementazione dati i calcoli non basilari che richiede.
+In particolare richiede di:
+\begin{enumerate}
+\item isolare i dipartimenti per cui esiste almeno una coorte non al primo anno di studi che vi appartiene,
+\item calcolare il numero totale di unità di tempo richieste per ogni dipartimento considerando solamente le coorti non al primo anno,
+\item calcolare il numero totale di unità di tempo assegnate per ogni dipartimento considerando solamente le coorti non al primo anno,
+\item calcolare la percentuale di ore assegnate alle coorti al primo anno rispetto a quelle richieste (o equivalentemente non assegnate) per ognuno dei dipartimenti,
+\item verificare che non esistano due dipartimenti diversi per cui il valore assoluto della differenza tra le loro due percentuali così calcolate superi il $10 \%$.
+\end{enumerate}
+Per questo vincolo non staremo a dare la formalizzazione in logica al primo ordine, ma è facilmente ricavabile dalla procedura appena descritta.\\
+
+Per entrambe le soluzioni si è cercato di utilizzare il minor numero di vincoli possibile cercando al contempo di tenere intatta la semantica delle soluzioni, per questo motivo tutti gli altri vincoli che possono essere raggruppati come \textit{vincoli riguardanti la regolarità} dello scheduling, sono stati condensati in entrambe le soluzioni in un unico vincolo che può essere chiamato \textbf{vincolo di regolarità}.
+Tale vincolo può essere descritto come:
+\begin{tcolorbox}[title=\textbf{Vincolo di regolarità}]
+Non può essere che una sanificazione sia schedulata al primo o all'ultimo istante di una giornata, dato che a fine giornata avviene la sanificazione generale di tutte le aule. Una sanificazione dura $2$ unità di tempo (1 ora) e viene effettuata \textbf{se e solo se} tra l'istante prima dell'inizio della sanificazione e l'istante successivo alla sanificazione all'interno della stanza interessata c'è stato un cambio di coorte. Uno slot di lezione dura $4$ unità di tempo (2 ore).
+\end{tcolorbox}
+La soluzione in \texttt{MiniZinc} e quella in \texttt{ASP} si differenziano principalmente per come il vincolo di regolarità è stato implementato.
+
+\chapter{La soluzione in MiniZinc}
+La soluzione in \texttt{MiniZinc} non ha creato grossi problemi durante la fase implementativa, anche se è passata attraverso diversi refactoring. La prima versione dell'implementazione in MiniZinc lavorava con una ricerca binaria, e il predicato $scheduling$ era implementato come un'array di variabili booleane associate alle tuple $(r,d,t,o)$ dove $r$ è un'aula, $d$ è un giorno, $t$ è un istante temporale e $o$ è una coorte o una sanificazione. 
+Tale versione tuttavia si è rivelata generalmente meno performante della successiva versione che lavora con una ricerca intera ed in cui il predicato $scheduling$ è implementato come un array di occupanti (sanificazione o una coorte), questo risultato non è stato una sorpresa dato che passare ad una versione di scheduling fatta in questo modo mi ha permesso di utilizzare constraint globali implementati nella libreria \texttt{globals.mzn} quali ad esempio \texttt{count} e \texttt{regular} in modo più semplice e ipotizzo efficiente.\\
+Un altro refactoring importante attraversato da questa soluzione ha riguardato il DFA utilizzato per implementare il vincolo di regolarità, si rimanda alla prossima sezione per i dettagli. 
+
+\section{Implementazione del vincolo di regolarità}
+Il vincolo di regolarità è stato implementato in modo naturale sfruttando il constraint globale \texttt{regular} offerto dalla libreria \texttt{globals.mzn}.
+Per implementare tale vincolo si è resa necessaria la progettazione di un automa deterministico a stati finiti, 
+
+\pagebreak
+
+% Adding a bibliography if citations are used in the report
+% Un/Comment the following line to customize the Bibliography title
+\renewcommand{\bibname}{References}
+\bibliographystyle{plain}
+\bibliography{ref}
+
+% Uncomment the following two lines to remvoe the cc license
+\vspace*{\fill}
+{\hypersetup{urlcolor=black}{\scriptsize \doclicenseThis}}
+% Adds reference to the Bibliography in the ToC
+\addcontentsline{toc}{chapter}{\bibname}
+
+\pagebreak
+
+\chapter*{Appendix}
+[\textit{Report the config files of the software used (i.e. SU2  and the mesher). Also attach to this report an archive with the mesh files, solutions and the reference solution data (e.g. data points of a Cp plot ...)}]
+%\section*{Mesh configuration files}
+%\section*{SU2 configuration files}
+%% \section{Reference solution data}
+
+
+\end{document}

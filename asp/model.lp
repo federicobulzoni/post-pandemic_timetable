@@ -22,8 +22,8 @@ occupant(0..n).
 #const max_cap = 60.
 cap(min_cap .. max_cap).
 
-#const min_stud = 300.
-#const max_stud = 1000.
+#const min_stud = 50.
+#const max_stud = 300.
 stud(min_stud .. max_stud).
 
 y(1..3).
@@ -93,7 +93,8 @@ timeAssigned(C, X) :- X = #count{R,D,T : scheduling(R,D,T,C), room(R), day(D), t
 unsatisfied(C) :- coorte(C), requiredTime(C,Y), reqT(Y), #count{R,D,T : scheduling(R,D,T,C), room(R), day(D), timeunit(T)} < Y.
 
 %:~ Z = #count{C : coorte(C), timeAssigned(C,X), tAss(X), requiredTime(C,Y), reqT(Y), X < Y}. [Z@3]
-:~ Z = #count{C : coorte(C), unsatisfied(C)}. [Z@3]
+nUnsat(Z) :- Z = #count{C : coorte(C), unsatisfied(C)}.
+:~ nUnsat(Z). [Z@3]
 :~ coorte(C), timeAssigned(C,X), tAss(X), requiredTime(C,Y), reqT(Y),
    X < Y,
    RES = (Y-X)*100/Y. [RES@2]
@@ -116,7 +117,10 @@ timeAssignedDep(DI, Z) :- Z = #count{C, R,D,T : coorteNextYear(C), department(C,
 
 
 :~ sanificationTime(K). [K@1]
+
 %% OUTPUT :
+#show sanificationTime/1.
+#show nUnsat/1.
 
 #show timeAssigned/2.
 #show totRequiredTimeDep/2.

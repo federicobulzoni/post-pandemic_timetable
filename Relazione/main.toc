@@ -1,0 +1,10 @@
+\babel@toc {english}{}
+\babel@toc {english}{}
+\contentsline {chapter}{Introduzione}{iii}{chapter*.2}%
+\contentsline {chapter}{Specifica del problema}{iv}{chapter*.3}%
+\contentsline {section}{\numberline {0.1}Dati in input}{iv}{section.0.1}%
+\contentsline {section}{\numberline {0.2}Requisiti}{iv}{section.0.2}%
+\contentsline {section}{\numberline {0.3}Assunzioni}{v}{section.0.3}%
+\contentsline {section}{\numberline {0.4}Funzione di costo}{v}{section.0.4}%
+\contentsline {chapter}{Scelte comuni alle due soluzioni}{vi}{chapter*.4}%
+\contentsline {chapter}{References}{viii}{Item.5}%

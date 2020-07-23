@@ -2,17 +2,18 @@ import os
 import random
 
 
-K = [2, 4, 6, 7, 8] 
+K = [1, 2] 
 g = 4
 for k in K:
-	for it in range(20):
-		n = random.randint(2*k, 8*k)
+	for it in range(50):
+		#n = g*k + it
+		n = random.randint(g*k, 3*g*k)
 		
-		capacity = [random.randint(30, 60) for i in range(4*k)]
-		nStudents = [random.randint(300, 1200) for i in range(n)]
+		capacity = [random.randint(30, 60) for i in range(g*k)]
+		nStudents = [random.randint(50, 300) for i in range(n)]
 		year = [random.randint(1,3) for i in range(n)]
-		d = 3
-		department = [random.randint(1, d) for i in range(n)]
+		d = random.randint(3, g*k)
+		department = range(1,d+1) + [random.randint(1, d) for i in range(d+1,n+1)]
 		requiredTime = [random.randint(40, 60) for i in range(n)]
 
 		filename_mzn = "./mzn/test/K-{0}_{1}.dzn".format(k,it+1)

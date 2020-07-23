@@ -9,7 +9,7 @@ array[ROOM] of int : capacity; % Association between a room and its capacity.
 
 int : N; % Number of different coortes
 set of int : COORTE = 1 .. N;  
-array[COORTE] of int : nStudents; % Association between a coorte and its number of students.
+array[COORTE] of 50 .. 300 : nStudents; % Association between a coorte and its number of students.
 array[COORTE] of 1 .. 3 : year; % Association between a coorte and the associated year of study.
 
 int : D; % Number of different departments.
@@ -21,7 +21,7 @@ set of int : TIMEUNIT = 1 .. TIMEUNIT_X_DAY;
 int : N_DAYS = 5; % Number of days considered for the scheduling.
 set of int : DAY = 1 .. N_DAYS;
 
-array[COORTE] of int : requiredTime; % Association between a coorte and the minimum amount of lecture's hours that it requires.
+array[COORTE] of 40 .. 60  : requiredTime; % Association between a coorte and the minimum amount of lecture's hours that it requires.
 
 % Decision variables:
 set of int : OCCUPANT = 0 .. N; % 0 is the sanification.
@@ -177,7 +177,7 @@ function var float : percUnsat(COORTE : coorte) =
     else (requiredTime[coorte] - timeAssigned(coorte)) / requiredTime[coorte]
   endif;
     
-solve :: int_search(scheduling, dom_w_deg, indomain_random)  minimize (timeAssigned(0)/(TIMEUNIT_X_DAY * N_DAYS * G * K) + 10*nCoortiUnsat()/N) + 5*max([percUnsat(coorte) | coorte in COORTE]);
+solve :: int_search(scheduling, dom_w_deg, indomain_random)  minimize (timeAssigned(0)/(TIMEUNIT_X_DAY * N_DAYS * G * K) + 2*(nCoortiUnsat()/N) + max([percUnsat(coorte) | coorte in COORTE]));
 
 % Output
 array [COORTE] of int : timeAssignedOut :: output_only = 
@@ -207,58 +207,62 @@ array [COORTE] of float : percUnsatOut :: output_only =
 | coorte in COORTE];
   
 int : digs = ceil(log(10.0, int2float(N)));
-output 
-[
-  "K = \(K)\n" ++ 
-  "capacity = \(capacity)\n" ++
-  "N = \(N)\n" ++
-  "nStudents = \(nStudents)\n" ++
-  "year = \(year)\n" ++
-  "department = \(department)\n" ++
-  "requiredTime = \(requiredTime)\n"
-]
-++ ["\nAssignment matrix Monday (room/schedule):"]
-++ ["\n"]
-++ [show_int(digs, scheduling[room, 1, timeunit]) ++ if timeunit == TIMEUNIT_X_DAY then "\n" else " " endif | room in ROOM, timeunit in TIMEUNIT]
-++ ["\n"]
+output
+%["K\t" ++ "N\t" ++ "UnsatCoorti\t" ++ "maxUnsatPerc\t" ++ "sanificationTime\n"] ++
+[show(K) ++ "\t" ++ show(N) ++ "\t" ++ show(D) ++ "\t" ++ show(nCoortiUnsatOut) ++ "\t" ++ show_float(3,0,100*(max(percUnsatOut))) ++ "\t" ++ show(sanificationTimeOut) ++ "\n"]
+ 
+% output 
+% [
+%   "K = \(K)\n" ++ 
+%   "capacity = \(capacity)\n" ++
+%   "N = \(N)\n" ++
+%   "nStudents = \(nStudents)\n" ++
+%   "year = \(year)\n" ++
+%   "department = \(department)\n" ++
+%   "requiredTime = \(requiredTime)\n"
+% ]
+% ++ ["\nAssignment matrix Monday (room/schedule):"]
+% ++ ["\n"]
+% ++ [show_int(digs, scheduling[room, 1, timeunit]) ++ if timeunit == TIMEUNIT_X_DAY then "\n" else " " endif | room in ROOM, timeunit in TIMEUNIT]
+% ++ ["\n"]
 
-++ ["\nAssignment matrix Tuesday (room/schedule):"]
-++ ["\n"]
-++ [show_int(digs, scheduling[room, 2, timeunit]) ++ if timeunit == TIMEUNIT_X_DAY then "\n" else " " endif | room in ROOM, timeunit in TIMEUNIT]
-++ ["\n"]
+% ++ ["\nAssignment matrix Tuesday (room/schedule):"]
+% ++ ["\n"]
+% ++ [show_int(digs, scheduling[room, 2, timeunit]) ++ if timeunit == TIMEUNIT_X_DAY then "\n" else " " endif | room in ROOM, timeunit in TIMEUNIT]
+% ++ ["\n"]
 
-++ ["\nAssignment matrix Wednesday (room/schedule):"]
-++ ["\n"]
-++ [show_int(digs, scheduling[room, 3, timeunit]) ++ if timeunit == TIMEUNIT_X_DAY then "\n" else " " endif | room in ROOM, timeunit in TIMEUNIT]
-++ ["\n"]
+% ++ ["\nAssignment matrix Wednesday (room/schedule):"]
+% ++ ["\n"]
+% ++ [show_int(digs, scheduling[room, 3, timeunit]) ++ if timeunit == TIMEUNIT_X_DAY then "\n" else " " endif | room in ROOM, timeunit in TIMEUNIT]
+% ++ ["\n"]
 
-++ ["\nAssignment matrix Thursday (room/schedule):"]
-++ ["\n"]
-++ [show_int(digs, scheduling[room, 4, timeunit]) ++ if timeunit == TIMEUNIT_X_DAY then "\n" else " " endif | room in ROOM, timeunit in TIMEUNIT]
-++ ["\n"]
+% ++ ["\nAssignment matrix Thursday (room/schedule):"]
+% ++ ["\n"]
+% ++ [show_int(digs, scheduling[room, 4, timeunit]) ++ if timeunit == TIMEUNIT_X_DAY then "\n" else " " endif | room in ROOM, timeunit in TIMEUNIT]
+% ++ ["\n"]
 
-++ ["\nAssignment matrix Friday (room/schedule):"]
-++ ["\n"]
-++ [show_int(digs, scheduling[room, 5, timeunit]) ++ if timeunit == TIMEUNIT_X_DAY then "\n" else " " endif | room in ROOM, timeunit in TIMEUNIT]
-++ ["\n"]
+% ++ ["\nAssignment matrix Friday (room/schedule):"]
+% ++ ["\n"]
+% ++ [show_int(digs, scheduling[room, 5, timeunit]) ++ if timeunit == TIMEUNIT_X_DAY then "\n" else " " endif | room in ROOM, timeunit in TIMEUNIT]
+% ++ ["\n"]
 
-++ ["\nTotal time assigned:"]
-++ ["\nCoorte " ++ show(coorte) ++ " = " ++ show(timeAssignedOut[coorte]) ++ " u.t." | coorte in COORTE]
-++ ["\n"]
+% ++ ["\nTotal time assigned:"]
+% ++ ["\nCoorte " ++ show(coorte) ++ " = " ++ show(timeAssignedOut[coorte]) ++ " u.t." | coorte in COORTE]
+% ++ ["\n"]
 
-++ ["\nNumber of coorti unsatisfied = " ++ show(nCoortiUnsatOut) ++ "."]
-++ ["\n"]
+% ++ ["\nNumber of coorti unsatisfied = " ++ show(nCoortiUnsatOut) ++ "."]
+% ++ ["\n"]
 
-++ ["Unsatisfied percentage:"]
-++ ["\nCoorte " ++ show(coorte) ++ " = " ++ show_float(3,0,100*percUnsatOut[coorte]) ++ "%" | coorte in COORTE]
-++ ["\n"]
+% ++ ["Unsatisfied percentage:"]
+% ++ ["\nCoorte " ++ show(coorte) ++ " = " ++ show_float(3,0,100*percUnsatOut[coorte]) ++ "%" | coorte in COORTE]
+% ++ ["\n"]
 
-++ ["\nTotal satisfied students:"]
-++ ["\nCoorte " ++ show(coorte) ++ " = " ++ show(satisfiedStudentsOut[coorte]) ++ " people." | coorte in COORTE]
-++ ["\n"]
+% ++ ["\nTotal satisfied students:"]
+% ++ ["\nCoorte " ++ show(coorte) ++ " = " ++ show(satisfiedStudentsOut[coorte]) ++ " people." | coorte in COORTE]
+% ++ ["\n"]
 
-++ ["\nDepartments with classes not at their first year: " ++ show(DEPWITHNEXTYEARS) ++ "."]
-++ ["\nCoortes not at their first year: " ++ show(COORTENEXTYEAR) ++ "."]
-++ ["\n"]
+% ++ ["\nDepartments with classes not at their first year: " ++ show(DEPWITHNEXTYEARS) ++ "."]
+% ++ ["\nCoortes not at their first year: " ++ show(COORTENEXTYEAR) ++ "."]
+% ++ ["\n"]
 
-++ ["sanificationTime = " ++ show(sanificationTimeOut) ++ " u.t."]
+% ++ ["sanificationTime = " ++ show(sanificationTimeOut) ++ " u.t."]

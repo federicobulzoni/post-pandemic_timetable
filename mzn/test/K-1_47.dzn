@@ -1,0 +1,8 @@
+K = 1;
+capacity = [60, 51, 50, 42];
+N = 4;
+nStudents = [113, 168, 216, 179];
+year = [1, 1, 2, 1];
+D = 3;
+department = [1, 2, 3, 1];
+requiredTime = [52, 52, 44, 54];

@@ -1,0 +1,10 @@
+\BOOKMARK [0][-]{chapter.1}{Introduzione}{}% 1
+\BOOKMARK [0][-]{chapter.2}{Specifica del problema}{}% 2
+\BOOKMARK [1][-]{section.2.1}{Dati in input}{chapter.2}% 3
+\BOOKMARK [1][-]{section.2.2}{Requisiti}{chapter.2}% 4
+\BOOKMARK [1][-]{section.2.3}{Assunzioni}{chapter.2}% 5
+\BOOKMARK [1][-]{section.2.4}{Funzione di costo}{chapter.2}% 6
+\BOOKMARK [0][-]{chapter.3}{Scelte comuni alle due soluzioni}{}% 7
+\BOOKMARK [0][-]{chapter.4}{La soluzione in MiniZinc}{}% 8
+\BOOKMARK [1][-]{section.4.1}{Implementazione del vincolo di regolarit\340}{chapter.4}% 9
+\BOOKMARK [0][-]{section.4.1}{References}{}% 10
