@@ -1,0 +1,47 @@
+#const k = 1.
+capacity(1,30).
+capacity(2,39).
+capacity(3,31).
+capacity(4,54).
+#const n = 10.
+#const d = 3.
+nStudents(1,247).
+year(1,2).
+department(1,1).
+requiredTime(1,50).
+nStudents(2,300).
+year(2,3).
+department(2,2).
+requiredTime(2,58).
+nStudents(3,52).
+year(3,3).
+department(3,3).
+requiredTime(3,41).
+nStudents(4,212).
+year(4,1).
+department(4,3).
+requiredTime(4,47).
+nStudents(5,92).
+year(5,3).
+department(5,2).
+requiredTime(5,42).
+nStudents(6,172).
+year(6,3).
+department(6,1).
+requiredTime(6,60).
+nStudents(7,166).
+year(7,3).
+department(7,1).
+requiredTime(7,58).
+nStudents(8,136).
+year(8,3).
+department(8,1).
+requiredTime(8,51).
+nStudents(9,231).
+year(9,3).
+department(9,2).
+requiredTime(9,47).
+nStudents(10,252).
+year(10,2).
+department(10,1).
+requiredTime(10,47).

@@ -1,0 +1,22 @@
+\begin{thebibliography}{1}
+
+\bibitem{DBLP:journals/corr/GebserKKS14}
+Martin Gebser, Roland Kaminski, Benjamin Kaufmann, and Torsten Schaub.
+\newblock Clingo = {ASP} + control: Preliminary report.
+\newblock {\em CoRR}, abs/1405.3694, 2014.
+
+\bibitem{DBLP:conf/cp/NethercoteSBBDT07}
+Nicholas Nethercote, Peter~J. Stuckey, Ralph Becket, Sebastian Brand,
+  Gregory~J. Duck, and Guido Tack.
+\newblock Minizinc: Towards a standard {CP} modelling language.
+\newblock In Christian Bessiere, editor, {\em Principles and Practice of
+  Constraint Programming - {CP} 2007, 13th International Conference, {CP} 2007,
+  Providence, RI, USA, September 23-27, 2007, Proceedings}, volume 4741 of {\em
+  Lecture Notes in Computer Science}, pages 529--543. Springer, 2007.
+
+\bibitem{DBLP:journals/air/Schaerf99}
+Andrea Schaerf.
+\newblock A survey of automated timetabling.
+\newblock {\em Artif. Intell. Rev.}, 13(2):87--127, 1999.
+
+\end{thebibliography}

@@ -7,4 +7,16 @@
 \BOOKMARK [0][-]{chapter.3}{Scelte comuni alle due soluzioni}{}% 7
 \BOOKMARK [0][-]{chapter.4}{La soluzione in MiniZinc}{}% 8
 \BOOKMARK [1][-]{section.4.1}{Implementazione del vincolo di regolarit\340}{chapter.4}% 9
-\BOOKMARK [0][-]{section.4.1}{References}{}% 10
+\BOOKMARK [1][-]{section.4.2}{La funzione di costo}{chapter.4}% 10
+\BOOKMARK [1][-]{section.4.3}{Annotazioni per la ricerca}{chapter.4}% 11
+\BOOKMARK [1][-]{section.4.4}{Il codice}{chapter.4}% 12
+\BOOKMARK [1][-]{section.4.5}{Esempio di output}{chapter.4}% 13
+\BOOKMARK [0][-]{chapter.5}{La soluzione in ASP}{}% 14
+\BOOKMARK [1][-]{section.5.1}{Implementazione del vincolo di regolarit\340}{chapter.5}% 15
+\BOOKMARK [1][-]{section.5.2}{La funzione di costo}{chapter.5}% 16
+\BOOKMARK [1][-]{section.5.3}{Il codice}{chapter.5}% 17
+\BOOKMARK [0][-]{chapter.6}{Esperimenti}{}% 18
+\BOOKMARK [1][-]{section.6.1}{Commenti sui risultati degli esperimenti}{chapter.6}% 19
+\BOOKMARK [0][-]{chapter.7}{Considerazioni e conclusioni}{}% 20
+\BOOKMARK [0][-]{chapter.8}{Tabelle dei risultati}{}% 21
+\BOOKMARK [0][-]{chapter*.3}{References}{}% 22
